@@ -172,8 +172,15 @@
       transform: translateY(-1px);
     }
 
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.44;
+      transform: none !important;
+    }
+
     .icon-btn {
       width: 40px;
+      padding: 0;
       display: grid;
       place-items: center;
     }
@@ -209,6 +216,15 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    i[data-lucide] {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      place-items: center;
+      line-height: 1;
+      flex: 0 0 auto;
     }
 
     .text-btn {
@@ -422,6 +438,10 @@
       display: grid;
       place-items: center;
       pointer-events: auto;
+      padding: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      text-align: center;
       border-radius: 50%;
       border: 2px solid rgba(255, 244, 212, 0.72);
       background:
@@ -460,6 +480,16 @@
       filter: saturate(1.12);
       z-index: 5;
       animation: selectedBreath 1.4s ease-in-out infinite;
+    }
+
+    .piece-glyph {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transform: translateY(-0.015em);
     }
 
     .piece.selected::before,
@@ -815,7 +845,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr;
       gap: 8px;
       padding: 8px;
       border-radius: 8px;
@@ -831,6 +861,8 @@
       justify-content: center;
       gap: 6px;
       padding: 0 7px;
+      width: 100%;
+      line-height: 1;
       font-size: 13px;
       font-weight: 800;
     }
@@ -1032,6 +1064,140 @@
 
     .coach-settings {
       grid-template-columns: 1fr 1fr;
+    }
+
+    .finish-popup {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(86%, 390px);
+      transform: translate(-50%, -50%);
+      z-index: 14;
+      display: none;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.28);
+      background: rgba(23, 17, 13, 0.9);
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.4);
+      color: var(--ivory);
+      pointer-events: auto;
+    }
+
+    .finish-popup.active {
+      display: grid;
+    }
+
+    .finish-popup.minimized {
+      top: auto;
+      bottom: 12px;
+      width: min(72%, 320px);
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      padding: 9px 10px;
+    }
+
+    .finish-popup h3,
+    .finish-popup p {
+      margin: 0;
+    }
+
+    .finish-popup h3 {
+      color: #ffe7a7;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .finish-popup p {
+      color: rgba(255, 244, 212, 0.76);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .finish-actions,
+    .summary-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .reward-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .reward-summary-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(10, 7, 5, 0.68);
+      backdrop-filter: blur(8px);
+    }
+
+    .reward-summary-modal.active {
+      display: grid;
+    }
+
+    .summary-dialog {
+      width: min(760px, 100%);
+      max-height: min(86vh, 760px);
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.2);
+      background: rgba(23, 17, 13, 0.94);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .summary-dialog header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .summary-dialog h2 {
+      margin: 0;
+      color: #ffe7a7;
+      font-size: 20px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-person {
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      background: rgba(255, 244, 212, 0.07);
+      padding: 12px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .summary-person h3 {
+      margin: 0;
+      color: #fff2bd;
+      font-size: 15px;
+    }
+
+    .summary-person ul {
+      margin: 0;
+      padding-left: 18px;
+      color: rgba(255, 244, 212, 0.76);
+      font-size: 13px;
+      line-height: 1.45;
     }
 
     .love-note {
@@ -1446,6 +1612,10 @@
         grid-template-columns: 1fr;
       }
 
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
       .tabs {
         grid-template-columns: 1fr 1fr;
       }
@@ -1510,7 +1680,7 @@
         <button class="icon-btn" id="newGameBtn" title="New game" aria-label="New game"><i data-lucide="sparkles"></i></button>
         <button class="text-btn offline-only" id="startBlackBtn" title="New game as Black"><i data-lucide="moon"></i>New Black</button>
         <button class="icon-btn" id="undoBtn" title="Undo move" aria-label="Undo move"><i data-lucide="undo-2"></i></button>
-        <button class="icon-btn offline-only" id="flipBtn" title="Start as Black" aria-label="Start new game as Black"><i data-lucide="rotate-cw"></i></button>
+        <button class="icon-btn" id="redoBtn" title="Redo move" aria-label="Redo move" disabled><i data-lucide="redo-2"></i></button>
         <button class="icon-btn" id="soundFxBtn" title="Sound effects on" aria-label="Toggle sound effects" aria-pressed="true"><i data-lucide="volume-2"></i></button>
       </div>
     </header>
@@ -1571,6 +1741,7 @@
             <div class="heat-layer" id="heatLayer"></div>
             <div class="hint-layer" id="hintLayer"></div>
             <div class="piece-layer" id="pieceLayer"></div>
+            <div class="finish-popup" id="finishPopup" aria-live="polite"></div>
           </div>
 
           <div class="board-footer">
@@ -1581,17 +1752,14 @@
       </section>
 
       <aside class="side-panel">
-        <nav class="tabs" aria-label="Training panels">
-          <button class="tab-btn active" data-tab="play"><i data-lucide="bot"></i>Play</button>
-          <button class="tab-btn coach-unlocked-only" data-tab="train"><i data-lucide="graduation-cap"></i>Train</button>
-          <button class="tab-btn coach-unlocked-only" data-tab="book"><i data-lucide="book-open"></i>Book</button>
-          <button class="tab-btn coach-unlocked-only" data-tab="review"><i data-lucide="clipboard-list"></i>Review</button>
+        <nav class="tabs" aria-label="Game setting panel">
+          <button class="tab-btn active" data-tab="play"><i data-lucide="settings"></i>Game Setting</button>
         </nav>
 
         <section class="panel active" id="panel-play">
           <div class="panel-header">
             <h2>Cát Tiên ♡ Đình Tài</h2>
-            <p>Red hosts, Black joins, and the board keeps both browsers in sync.</p>
+            <p>Every move is a love note: guard the general, share the plan, and checkmate only with a smile.</p>
           </div>
           <div class="panel-body">
             <div class="field-grid common-controls">
@@ -1637,27 +1805,6 @@
               <span>Play bravely, forgive blunders softly, and let every rematch be another date.</span>
             </div>
 
-            <div class="field-grid">
-              <div class="field offline-only">
-                <label for="difficultySelect">Strength</label>
-                <select id="difficultySelect">
-                  <option value="emperor" selected>Emperor depth 7</option>
-                  <option value="dragon">Dragon depth 6</option>
-                  <option value="master">Master depth 5</option>
-                  <option value="club">Club depth 4</option>
-                  <option value="student">Student depth 3</option>
-                </select>
-              </div>
-              <div class="field offline-only">
-                <label for="styleSelect">Opponent</label>
-                <select id="styleSelect">
-                  <option value="aggressive" selected>Fast attack</option>
-                  <option value="fortress">Hard defense</option>
-                  <option value="balanced">Balanced pro</option>
-                </select>
-              </div>
-            </div>
-
             <div class="coach-lock coach-locked-only">
               <header>
                 <h3>Private Coach</h3>
@@ -1680,6 +1827,24 @@
                 <button class="text-btn primary" id="analyzeBtn"><i data-lucide="scan-search"></i>Analyze</button>
               </div>
               <div class="field-grid coach-settings">
+                <div class="field offline-only">
+                  <label for="difficultySelect">Strength</label>
+                  <select id="difficultySelect">
+                    <option value="emperor" selected>Emperor depth 7</option>
+                    <option value="dragon">Dragon depth 6</option>
+                    <option value="master">Master depth 5</option>
+                    <option value="club">Club depth 4</option>
+                    <option value="student">Student depth 3</option>
+                  </select>
+                </div>
+                <div class="field offline-only">
+                  <label for="styleSelect">Opponent</label>
+                  <select id="styleSelect">
+                    <option value="aggressive" selected>Fast attack</option>
+                    <option value="fortress">Hard defense</option>
+                    <option value="balanced">Balanced pro</option>
+                  </select>
+                </div>
                 <div class="field">
                   <label for="coachLevelSelect">Coach Engine</label>
                   <select id="coachLevelSelect">
@@ -1723,7 +1888,7 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-train">
+        <section class="panel" id="panel-train" hidden>
           <div class="panel-header">
             <h2>Professional Training Hall</h2>
             <p>Opening command, fast attack, fortress defense, counterattack, and endgame conversion.</p>
@@ -1738,7 +1903,7 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-book">
+        <section class="panel" id="panel-book" hidden>
           <div class="panel-header">
             <h2>Attack And Defense Book</h2>
             <p>Use these professional plans to build the position you want before tactics begin.</p>
@@ -1746,7 +1911,7 @@
           <div class="panel-body" id="bookPanel"></div>
         </section>
 
-        <section class="panel" id="panel-review">
+        <section class="panel" id="panel-review" hidden>
           <div class="panel-header">
             <h2>Posture Review</h2>
             <p>Read the field: king safety, central files, river control, and initiative.</p>
@@ -1778,7 +1943,10 @@
         <div class="reward-panel">
           <header>
             <h2>Winner Rewards: Promises for when you meet!</h2>
-            <span class="badge" id="winnerRewardTotal">0 saved</span>
+            <div class="reward-header-actions">
+              <button class="text-btn" id="winnerSummaryBtn" type="button"><i data-lucide="list-checks"></i>Summary</button>
+              <span class="badge" id="winnerRewardTotal">0 saved</span>
+            </div>
           </header>
           <div class="reward-list" id="winnerRewardList"></div>
           <div class="reward-add">
@@ -1790,7 +1958,10 @@
         <div class="reward-panel">
           <header>
             <h2>Loser Rewards:</h2>
-            <span class="badge" id="loserRewardTotal">0 saved</span>
+            <div class="reward-header-actions">
+              <button class="text-btn" id="loserSummaryBtn" type="button"><i data-lucide="list-checks"></i>Summary</button>
+              <span class="badge" id="loserRewardTotal">0 saved</span>
+            </div>
           </header>
           <div class="reward-list" id="loserRewardList"></div>
           <div class="reward-add">
@@ -1800,6 +1971,16 @@
         </div>
       </div>
     </section>
+
+    <div class="reward-summary-modal" id="rewardSummaryModal" role="dialog" aria-modal="true" aria-labelledby="rewardSummaryTitle">
+      <div class="summary-dialog">
+        <header>
+          <h2 id="rewardSummaryTitle">Rewards Summary</h2>
+          <button class="icon-btn" id="closeRewardSummaryBtn" aria-label="Close rewards summary"><i data-lucide="x"></i></button>
+        </header>
+        <div class="summary-grid" id="rewardSummaryGrid"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -2009,10 +2190,12 @@
       selected: null,
       selectedMoves: [],
       history: [],
+      redoStack: [],
       captured: { red: [], black: [] },
       flipped: false,
       gameOver: false,
       winnerColor: null,
+      finishPopup: { closed: false, minimized: false },
       aiThinking: false,
       lastMove: null,
       training: null,
@@ -2063,7 +2246,9 @@
       buttons: null,
       players: null,
       rewards: null,
-      music: null
+      music: null,
+      finishPopup: null,
+      rewardSummary: null
     };
     let iconsDirty = true;
 
@@ -2074,6 +2259,7 @@
       pieceLayer: document.getElementById("pieceLayer"),
       hintLayer: document.getElementById("hintLayer"),
       heatLayer: document.getElementById("heatLayer"),
+      finishPopup: document.getElementById("finishPopup"),
       turnStatus: document.getElementById("turnStatus"),
       gameStatus: document.getElementById("gameStatus"),
       redPlayerCard: document.getElementById("redPlayerCard"),
@@ -2117,7 +2303,14 @@
       addWinnerRewardBtn: document.getElementById("addWinnerRewardBtn"),
       addLoserRewardBtn: document.getElementById("addLoserRewardBtn"),
       winnerRewardTotal: document.getElementById("winnerRewardTotal"),
-      loserRewardTotal: document.getElementById("loserRewardTotal")
+      loserRewardTotal: document.getElementById("loserRewardTotal"),
+      winnerSummaryBtn: document.getElementById("winnerSummaryBtn"),
+      loserSummaryBtn: document.getElementById("loserSummaryBtn"),
+      rewardSummaryModal: document.getElementById("rewardSummaryModal"),
+      rewardSummaryTitle: document.getElementById("rewardSummaryTitle"),
+      rewardSummaryGrid: document.getElementById("rewardSummaryGrid"),
+      closeRewardSummaryBtn: document.getElementById("closeRewardSummaryBtn"),
+      redoBtn: document.getElementById("redoBtn")
     };
 
     const TRAINING = [
@@ -3619,6 +3812,7 @@
       renderHeat();
       renderStatus();
       renderPlayers();
+      renderFinishPopup();
       renderCoach();
       renderHistory();
       renderCaptured();
@@ -3678,7 +3872,7 @@
           div.style.setProperty("--x", d.x);
           div.style.setProperty("--y", d.y);
           div.type = "button";
-          div.textContent = GLYPH[p.color][p.type];
+          div.innerHTML = `<span class="piece-glyph">${GLYPH[p.color][p.type]}</span>`;
           div.title = `${p.color} ${NAME[p.type]}`;
           div.dataset.square = `${r}-${c}`;
           div.dataset.piece = `${p.color}-${p.type}`;
@@ -3884,6 +4078,66 @@
       els.blackPlayerCard.querySelector("em").textContent = `${PLAYER_NAME.black} · Black${state.online.role === "guest" ? " · you" : ""}`;
     }
 
+    function renderFinishPopup() {
+      const signature = [
+        state.gameOver,
+        state.winnerColor || "",
+        state.finishPopup.closed,
+        state.finishPopup.minimized
+      ].join("|");
+      if (renderCache.finishPopup === signature) return;
+      renderCache.finishPopup = signature;
+
+      if (!state.gameOver || !state.winnerColor || state.finishPopup.closed) {
+        els.finishPopup.className = "finish-popup";
+        els.finishPopup.innerHTML = "";
+        return;
+      }
+
+      const winner = playerLabel(state.winnerColor);
+      const loser = playerLabel(other(state.winnerColor));
+      els.finishPopup.className = `finish-popup active${state.finishPopup.minimized ? " minimized" : ""}`;
+      if (state.finishPopup.minimized) {
+        els.finishPopup.innerHTML = `
+          <strong>${winner} won</strong>
+          <button class="icon-btn" data-finish-action="expand" aria-label="Expand match result"><i data-lucide="maximize-2"></i></button>
+          <button class="icon-btn" data-finish-action="close" aria-label="Close match result"><i data-lucide="x"></i></button>
+        `;
+      } else {
+        els.finishPopup.innerHTML = `
+          <h3>${winner} wins the match</h3>
+          <p>${loser} defended bravely. Pick a reward below and save the promise for your next date.</p>
+          <div class="finish-actions">
+            <button class="text-btn primary" data-summary-kind="winner"><i data-lucide="trophy"></i>Winner Rewards</button>
+            <button class="text-btn" data-summary-kind="loser"><i data-lucide="heart-handshake"></i>Loser Rewards</button>
+            <button class="icon-btn" data-finish-action="minimize" aria-label="Minimize match result"><i data-lucide="minus"></i></button>
+            <button class="icon-btn" data-finish-action="close" aria-label="Close match result"><i data-lucide="x"></i></button>
+          </div>
+        `;
+      }
+      iconsDirty = true;
+    }
+
+    function handleFinishPopupAction(event) {
+      const summaryButton = event.target.closest("[data-summary-kind]");
+      if (summaryButton) {
+        openRewardSummary(summaryButton.dataset.summaryKind);
+        return;
+      }
+      const actionButton = event.target.closest("[data-finish-action]");
+      if (!actionButton) return;
+      const action = actionButton.dataset.finishAction;
+      if (action === "minimize") {
+        state.finishPopup.minimized = true;
+      } else if (action === "expand") {
+        state.finishPopup.minimized = false;
+      } else if (action === "close") {
+        state.finishPopup.closed = true;
+      }
+      renderCache.finishPopup = null;
+      render();
+    }
+
     function phaseLabel(board) {
       let count = 0;
       let heavy = 0;
@@ -4068,7 +4322,10 @@
         state.aiEnabled,
         state.autoOurPlan,
         state.soundEnabled,
-        state.coachSpeechEnabled
+        state.coachSpeechEnabled,
+        state.redoStack.length,
+        state.aiThinking,
+        state.coachThinking
       ].join("|");
       if (renderCache.buttons === signature) return false;
       renderCache.buttons = signature;
@@ -4089,6 +4346,10 @@
       els.soundFxBtn.classList.toggle("muted", !state.soundEnabled);
       els.soundFxBtn.setAttribute("aria-pressed", String(state.soundEnabled));
       els.soundFxBtn.title = state.soundEnabled ? "Sound effects on" : "Sound effects off";
+
+      els.redoBtn.disabled = !state.redoStack.length || state.aiThinking || state.coachThinking;
+      els.redoBtn.classList.toggle("active", state.redoStack.length > 0);
+      els.redoBtn.title = state.redoStack.length ? "Redo the move you just undid" : "Redo becomes available after undo";
 
       const coachIcon = state.coachSpeechEnabled ? "message-circle" : "message-circle-off";
       els.coachSpeechBtn.innerHTML = `<i data-lucide="${coachIcon}"></i>`;
@@ -4405,6 +4666,7 @@
     }
 
     function applyMove(move, actor) {
+      if (actor !== "redo") state.redoStack = [];
       state.notice = null;
       state.coachAdvice = null;
       state.coachThinking = false;
@@ -4434,6 +4696,46 @@
       playSound(captured ? "capture" : actor === "ai" ? "aiMove" : "move");
     }
 
+    function captureMatchState() {
+      return {
+        board: state.board,
+        sideToMove: state.sideToMove,
+        captured: {
+          red: state.captured.red.slice(),
+          black: state.captured.black.slice()
+        },
+        lastMove: state.lastMove,
+        history: state.history.slice(),
+        gameOver: state.gameOver,
+        winnerColor: state.winnerColor,
+        finishPopup: { ...state.finishPopup }
+      };
+    }
+
+    function restoreMatchState(snapshot) {
+      state.board = snapshot.board;
+      state.sideToMove = snapshot.sideToMove;
+      state.captured = {
+        red: snapshot.captured.red.slice(),
+        black: snapshot.captured.black.slice()
+      };
+      state.lastMove = snapshot.lastMove;
+      state.history = snapshot.history.slice();
+      state.gameOver = snapshot.gameOver;
+      state.winnerColor = snapshot.winnerColor;
+      state.finishPopup = { ...snapshot.finishPopup };
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      state.notice = null;
+      state.coachThinking = false;
+      state.coachAdvice = null;
+      state.analysisView = null;
+      renderCache.history = null;
+      renderCache.captured = null;
+      renderCache.finishPopup = null;
+    }
+
     function moveText(board, move) {
       const piece = board[move.from.r][move.from.c];
       const capture = board[move.to.r][move.to.c];
@@ -4451,12 +4753,14 @@
         const winner = state.sideToMove === RED ? "Black" : "Red";
         state.gameOver = true;
         state.winnerColor = state.sideToMove === RED ? BLACK : RED;
+        state.finishPopup = { closed: false, minimized: false };
         const reason = missingKing || isInCheck(state.board, state.sideToMove) ? "checkmate" : "no legal move";
         flashStatus(`${playerLabel(state.winnerColor)} wins by ${reason}.`);
         return;
       }
       state.gameOver = false;
       state.winnerColor = null;
+      state.finishPopup = { closed: false, minimized: false };
     }
 
     function queueAiMove() {
@@ -4507,9 +4811,11 @@
       state.selected = null;
       state.selectedMoves = [];
       state.history = [];
+      state.redoStack = [];
       state.captured = { red: [], black: [] };
       state.gameOver = false;
       state.winnerColor = null;
+      state.finishPopup = { closed: false, minimized: false };
       state.rewardRoundClaims = {};
       state.aiThinking = false;
       if (state.online.role) state.aiEnabled = false;
@@ -4561,6 +4867,7 @@
     function undoMove(options = {}) {
       if (state.aiThinking || !state.history.length) return;
       playSound("toggle");
+      state.redoStack.push(captureMatchState());
       const prev = state.history.pop();
       state.board = prev.board;
       state.sideToMove = prev.sideToMove;
@@ -4568,6 +4875,7 @@
       state.lastMove = prev.lastMove;
       state.gameOver = false;
       state.winnerColor = null;
+      state.finishPopup = { closed: false, minimized: false };
       state.selected = null;
       state.selectedMoves = [];
       state.hintMove = null;
@@ -4578,6 +4886,18 @@
       render();
       if (state.online.connected && options.broadcast !== false) {
         sendOnlineMessage({ type: "undo" });
+      }
+      scheduleAutoOurPlan();
+    }
+
+    function redoMove(options = {}) {
+      if (state.aiThinking || state.coachThinking || !state.redoStack.length) return;
+      playSound("toggle");
+      const snapshot = state.redoStack.pop();
+      restoreMatchState(snapshot);
+      render();
+      if (state.online.connected && options.broadcast !== false) {
+        sendOnlineMessage({ type: "redo" });
       }
       scheduleAutoOurPlan();
     }
@@ -4834,6 +5154,33 @@
     function rewardRecipient(kind) {
       if (!state.winnerColor) return null;
       return kind === "winner" ? state.winnerColor : other(state.winnerColor);
+    }
+
+    function openRewardSummary(kind) {
+      const title = kind === "winner"
+        ? "Winner Rewards Summary"
+        : "Loser Rewards Summary";
+      els.rewardSummaryTitle.textContent = title;
+      els.rewardSummaryGrid.innerHTML = [RED, BLACK].map((color) => {
+        const avatar = color === RED ? "🐶" : "🐼";
+        const rows = state.rewards[kind].map((item) => (
+          `<li><strong>${item.counts[color]}</strong> × ${escapeHtml(item.text)}</li>`
+        )).join("");
+        const total = state.rewards[kind].reduce((sum, item) => sum + item.counts[color], 0);
+        return `
+          <section class="summary-person">
+            <h3>${avatar} ${escapeHtml(playerLabel(color))} <span class="badge">${total} total</span></h3>
+            <ul>${rows}</ul>
+          </section>
+        `;
+      }).join("");
+      els.rewardSummaryModal.classList.add("active");
+      iconsDirty = true;
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeRewardSummary() {
+      els.rewardSummaryModal.classList.remove("active");
     }
 
     function findReward(kind, id) {
@@ -5169,6 +5516,10 @@
         undoMove({ broadcast: false });
         return;
       }
+      if (message.type === "redo") {
+        redoMove({ broadcast: false });
+        return;
+      }
       if (message.type === "music") {
         applyRemoteMusic(message.music);
       }
@@ -5259,8 +5610,10 @@
       state.captured = deserializeCaptured(snapshot.captured);
       state.lastMove = deserializeMove(snapshot.lastMove);
       state.history = deserializeHistory(snapshot.history);
+      state.redoStack = [];
       state.gameOver = Boolean(snapshot.gameOver);
       state.winnerColor = snapshot.winnerColor || null;
+      state.finishPopup = { closed: false, minimized: false };
       state.playerColor = state.online.role === "guest" ? BLACK : RED;
       state.aiColor = other(state.playerColor);
       state.flipped = state.playerColor === BLACK;
@@ -5348,6 +5701,7 @@
     }
 
     els.boardStage.addEventListener("click", (event) => {
+      if (event.target.closest("#finishPopup")) return;
       const square = eventToSquare(event);
       handleSquareClick(square.r, square.c);
     });
@@ -5355,7 +5709,8 @@
     document.getElementById("newGameBtn").addEventListener("click", newGame);
     document.getElementById("startBlackBtn").addEventListener("click", startAsBlackGame);
     document.getElementById("undoBtn").addEventListener("click", undoMove);
-    document.getElementById("flipBtn").addEventListener("click", startAsBlackGame);
+    els.redoBtn.addEventListener("click", redoMove);
+    els.finishPopup.addEventListener("click", handleFinishPopupAction);
     document.getElementById("hintBtn").addEventListener("click", showHint);
     els.opponentIntentBtn.addEventListener("click", analyzeOpponentIntent);
     els.ourPlanBtn.addEventListener("click", toggleOurPlan);
@@ -5379,6 +5734,12 @@
     });
     els.addWinnerRewardBtn.addEventListener("click", () => addReward("winner"));
     els.addLoserRewardBtn.addEventListener("click", () => addReward("loser"));
+    els.winnerSummaryBtn.addEventListener("click", () => openRewardSummary("winner"));
+    els.loserSummaryBtn.addEventListener("click", () => openRewardSummary("loser"));
+    els.closeRewardSummaryBtn.addEventListener("click", closeRewardSummary);
+    els.rewardSummaryModal.addEventListener("click", (event) => {
+      if (event.target === els.rewardSummaryModal) closeRewardSummary();
+    });
     els.winnerRewardInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") addReward("winner");
     });
