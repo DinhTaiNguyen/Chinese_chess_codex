@@ -1946,6 +1946,7 @@
             <h2>Winner Rewards: Promises for when you meet!</h2>
             <div class="reward-header-actions">
               <button class="text-btn" id="winnerSummaryBtn" type="button"><i data-lucide="list-checks"></i>Summary</button>
+              <button class="text-btn" id="winnerSyncRewardsBtn" type="button"><i data-lucide="refresh-cw"></i>Sync</button>
               <span class="badge" id="winnerRewardTotal">0 saved</span>
             </div>
           </header>
@@ -1961,6 +1962,7 @@
             <h2>Loser Rewards:</h2>
             <div class="reward-header-actions">
               <button class="text-btn" id="loserSummaryBtn" type="button"><i data-lucide="list-checks"></i>Summary</button>
+              <button class="text-btn" id="loserSyncRewardsBtn" type="button"><i data-lucide="refresh-cw"></i>Sync</button>
               <span class="badge" id="loserRewardTotal">0 saved</span>
             </div>
           </header>
@@ -2317,6 +2319,8 @@
       loserRewardTotal: document.getElementById("loserRewardTotal"),
       winnerSummaryBtn: document.getElementById("winnerSummaryBtn"),
       loserSummaryBtn: document.getElementById("loserSummaryBtn"),
+      winnerSyncRewardsBtn: document.getElementById("winnerSyncRewardsBtn"),
+      loserSyncRewardsBtn: document.getElementById("loserSyncRewardsBtn"),
       rewardSummaryModal: document.getElementById("rewardSummaryModal"),
       rewardSummaryTitle: document.getElementById("rewardSummaryTitle"),
       rewardSummaryGrid: document.getElementById("rewardSummaryGrid"),
@@ -4894,6 +4898,7 @@
       render();
       if (state.online.connected && options.broadcast !== false) {
         sendOnlineMessage({ type: "reset", snapshot: buildOnlineSnapshot() });
+        broadcastRewardSync();
       }
       if (!state.online.connected && state.aiEnabled && state.sideToMove === state.aiColor) {
         queueAiMove();
@@ -5145,6 +5150,59 @@
       }
     }
 
+    function serializeRewards() {
+      return {
+        winner: state.rewards.winner.map((item) => normalizeRewardRow(item)),
+        loser: state.rewards.loser.map((item) => normalizeRewardRow(item))
+      };
+    }
+
+    function normalizeRewardClaims(claims) {
+      if (!claims || typeof claims !== "object") return {};
+      return Object.fromEntries(Object.entries(claims).filter(([, claim]) =>
+        claim && typeof claim === "object" && (claim.player === RED || claim.player === BLACK)
+      ));
+    }
+
+    function broadcastRewardSync(options = {}) {
+      const sent = sendOnlineMessage({
+        type: "rewards",
+        rewards: serializeRewards(),
+        rewardRoundClaims: state.rewardRoundClaims,
+        updatedAt: Date.now()
+      });
+      if (options.manual) {
+        flashStatus(sent ? "Rewards synced to the other player." : "Rewards saved here. Connect online to sync.");
+      }
+      return sent;
+    }
+
+    function applyRewardSync(message) {
+      if (!message || !message.rewards) return;
+      state.rewards = {
+        winner: Array.isArray(message.rewards.winner)
+          ? message.rewards.winner.map(normalizeRewardRow)
+          : state.rewards.winner,
+        loser: Array.isArray(message.rewards.loser)
+          ? message.rewards.loser.map(normalizeRewardRow)
+          : state.rewards.loser
+      };
+      state.rewardRoundClaims = normalizeRewardClaims(message.rewardRoundClaims);
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+      refreshOpenRewardSummary();
+      flashStatus("Rewards updated from the other player.");
+    }
+
+    function saveAndRenderRewards(options = {}) {
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+      refreshOpenRewardSummary();
+      if (options.broadcast !== false) broadcastRewardSync();
+    }
+
     function escapeHtml(value) {
       return String(value)
         .replace(/&/g, "&amp;")
@@ -5227,6 +5285,7 @@
         ? "Winner Rewards Summary"
         : "Loser Rewards Summary";
       els.rewardSummaryTitle.textContent = title;
+      els.rewardSummaryModal.dataset.summaryKind = kind;
       els.rewardSummaryGrid.innerHTML = [RED, BLACK].map((color) => {
         const avatar = color === RED ? "🐶" : "🐼";
         const rows = state.rewards[kind].map((item) => (
@@ -5247,6 +5306,13 @@
 
     function closeRewardSummary() {
       els.rewardSummaryModal.classList.remove("active");
+      els.rewardSummaryBody.innerHTML = "";
+      delete els.rewardSummaryModal.dataset.summaryKind;
+    }
+
+    function refreshOpenRewardSummary() {
+      if (!els.rewardSummaryModal.classList.contains("active")) return;
+      openRewardSummary(els.rewardSummaryModal.dataset.summaryKind || "winner");
     }
 
     function findReward(kind, id) {
@@ -5257,9 +5323,7 @@
       const reward = findReward(kind, id);
       if (!reward || !reward.counts || !(player in reward.counts)) return;
       reward.counts[player] = Math.max(0, reward.counts[player] + delta);
-      saveRewards();
-      renderCache.rewards = null;
-      render();
+      saveAndRenderRewards();
     }
 
     function claimReward(kind, id, checked) {
@@ -5281,9 +5345,7 @@
         delete state.rewardRoundClaims[id];
         reward.counts[claimedPlayer] = Math.max(0, reward.counts[claimedPlayer] - 1);
       }
-      saveRewards();
-      renderCache.rewards = null;
-      render();
+      saveAndRenderRewards();
     }
 
     function addReward(kind) {
@@ -5299,17 +5361,13 @@
         counts: { red: 0, black: 0 }
       });
       input.value = "";
-      saveRewards();
-      renderCache.rewards = null;
-      render();
+      saveAndRenderRewards();
     }
 
     function removeReward(kind, id) {
       state.rewards[kind] = state.rewards[kind].filter((item) => item.id !== id);
       delete state.rewardRoundClaims[id];
-      saveRewards();
-      renderCache.rewards = null;
-      render();
+      saveAndRenderRewards();
     }
 
     function handleRewardAction(event) {
@@ -5527,6 +5585,7 @@
         if (role === "host") {
           sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
           broadcastMusicState();
+          broadcastRewardSync({ broadcast: true });
         } else {
           sendOnlineMessage({ type: "hello", name: localPlayerLabel() });
         }
@@ -5564,6 +5623,7 @@
       if (message.type === "hello" && state.online.role === "host") {
         sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
         broadcastMusicState();
+        broadcastRewardSync({ broadcast: true });
         return;
       }
       if (message.type === "snapshot") {
@@ -5588,6 +5648,11 @@
       }
       if (message.type === "music") {
         applyRemoteMusic(message.music);
+        return;
+      }
+      if (message.type === "rewards") {
+        applyRewardSync(message);
+        return;
       }
     }
 
@@ -5805,6 +5870,8 @@
     els.addLoserRewardBtn.addEventListener("click", () => addReward("loser"));
     els.winnerSummaryBtn.addEventListener("click", () => openRewardSummary("winner"));
     els.loserSummaryBtn.addEventListener("click", () => openRewardSummary("loser"));
+    els.winnerSyncRewardsBtn.addEventListener("click", () => broadcastRewardSync({ manual: true }));
+    els.loserSyncRewardsBtn.addEventListener("click", () => broadcastRewardSync({ manual: true }));
     els.closeRewardSummaryBtn.addEventListener("click", closeRewardSummary);
     els.rewardSummaryModal.addEventListener("click", (event) => {
       if (event.target === els.rewardSummaryModal) closeRewardSummary();
