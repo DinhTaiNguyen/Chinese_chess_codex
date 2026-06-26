@@ -1,0 +1,4728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đình Tài ♡ Cát Tiên Xiangqi</title>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --ink: #17110d;
+      --ink-soft: #2a2018;
+      --paper: #f2d99c;
+      --paper-deep: #c4863a;
+      --line: #5f2e18;
+      --red: #c93528;
+      --red-deep: #781e1a;
+      --jade: #1d6f5e;
+      --jade-soft: #8cc5ad;
+      --gold: #dca84d;
+      --ivory: #fff4d4;
+      --smoke: rgba(255, 246, 218, 0.78);
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+      --piece: clamp(34px, 6.3vmin, 58px);
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ivory);
+      background:
+        linear-gradient(120deg, rgba(75, 35, 23, 0.72), rgba(18, 48, 38, 0.9)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 14px),
+        #15100d;
+      overflow-x: hidden;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app-shell {
+      width: min(1520px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: clamp(14px, 2vw, 26px);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+
+    .topbar {
+      min-height: 66px;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      grid-template-areas:
+        "brand toolbar"
+        "status toolbar";
+      align-items: center;
+      gap: 8px 14px;
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      background: rgba(23, 17, 13, 0.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .brand {
+      grid-area: brand;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--red-deep);
+      background:
+        radial-gradient(circle at 35% 30%, #fff6d8 0 20%, #e6b75d 21% 54%, #8e3b24 55% 100%);
+      border: 2px solid rgba(255, 244, 212, 0.62);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+      font-size: 24px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(19px, 2vw, 29px);
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: rgba(255, 244, 212, 0.72);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .status-pill {
+      grid-area: status;
+      min-width: 214px;
+      width: min(520px, 100%);
+      display: grid;
+      gap: 2px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: rgba(255, 244, 212, 0.09);
+      border: 1px solid rgba(255, 244, 212, 0.13);
+    }
+
+    .status-pill strong {
+      font-size: 13px;
+      color: #fff7dc;
+    }
+
+    .status-pill span {
+      color: rgba(255, 244, 212, 0.68);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      grid-area: toolbar;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .icon-btn,
+    .text-btn,
+    .tab-btn,
+    .lesson-btn,
+    .book-btn {
+      border: 1px solid rgba(255, 244, 212, 0.16);
+      color: var(--ivory);
+      background: rgba(255, 244, 212, 0.08);
+      border-radius: 8px;
+      min-height: 38px;
+      transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+    }
+
+    .icon-btn:hover,
+    .text-btn:hover,
+    .tab-btn:hover,
+    .lesson-btn:hover,
+    .book-btn:hover {
+      background: rgba(255, 244, 212, 0.14);
+      border-color: rgba(255, 244, 212, 0.32);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn {
+      width: 40px;
+      display: grid;
+      place-items: center;
+    }
+
+    .icon-btn.active {
+      color: #fff7dc;
+      background: rgba(29, 111, 94, 0.28);
+      border-color: rgba(140, 197, 173, 0.58);
+      box-shadow: 0 0 18px rgba(29, 111, 94, 0.18);
+    }
+
+    .icon-btn.muted {
+      color: rgba(255, 244, 212, 0.46);
+      background: rgba(255, 244, 212, 0.045);
+    }
+
+    .icon-btn svg,
+    .tab-btn svg,
+    .book-btn svg,
+    .text-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 1.9;
+    }
+
+    i[data-lucide]::before {
+      content: attr(data-lucide);
+      font-size: 9px;
+      font-style: normal;
+      font-weight: 900;
+      line-height: 1;
+      max-width: 34px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .text-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 12px;
+      font-weight: 700;
+    }
+
+    .text-btn.primary {
+      background: linear-gradient(135deg, #d94d35, #9e2920);
+      border-color: rgba(255, 212, 159, 0.45);
+      color: #fff8e7;
+    }
+
+    .text-btn.active {
+      background: rgba(29, 111, 94, 0.28);
+      border-color: rgba(140, 197, 173, 0.58);
+      color: #fff7dc;
+      box-shadow: 0 0 18px rgba(29, 111, 94, 0.18);
+    }
+
+    body:not(.coach-unlocked) .coach-unlocked-only,
+    body.online-mode .offline-only {
+      display: none !important;
+    }
+
+    body.coach-unlocked .coach-locked-only {
+      display: none !important;
+    }
+
+    body:not(.coach-unlocked) .tabs {
+      grid-template-columns: 1fr;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(440px, 1fr) minmax(360px, 430px);
+      gap: clamp(14px, 2vw, 24px);
+      align-items: start;
+    }
+
+    .board-column {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .intel-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .intel-cell {
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      background: rgba(23, 17, 13, 0.64);
+      padding: 10px 12px;
+      min-height: 62px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+    }
+
+    .intel-cell span {
+      color: rgba(255, 244, 212, 0.6);
+      font-size: 12px;
+    }
+
+    .intel-cell strong {
+      font-size: clamp(16px, 2vw, 22px);
+      line-height: 1;
+      color: #fff1c0;
+    }
+
+    .board-frame {
+      width: min(100%, 860px);
+      justify-self: center;
+      border-radius: 8px;
+      padding: clamp(10px, 1.5vw, 16px);
+      background:
+        linear-gradient(135deg, rgba(255, 246, 218, 0.18), rgba(255, 246, 218, 0.035)),
+        rgba(32, 22, 15, 0.78);
+      border: 1px solid rgba(255, 244, 212, 0.18);
+      box-shadow: var(--shadow);
+    }
+
+    .board-stage {
+      position: relative;
+      width: min(100%, calc(100vh - 210px));
+      min-width: 330px;
+      aspect-ratio: 8 / 9;
+      margin: 0 auto;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(92, 50, 24, 0.22), transparent 12% 88%, rgba(92, 50, 24, 0.25)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 18px),
+        linear-gradient(135deg, #f8dda0, #c78139);
+      border: 2px solid rgba(69, 33, 16, 0.84);
+      box-shadow:
+        inset 0 0 34px rgba(77, 38, 17, 0.55),
+        0 14px 42px rgba(0, 0, 0, 0.34);
+      overflow: hidden;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .board-inner {
+      position: absolute;
+      inset: 6.8%;
+    }
+
+    .board-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 1px 0 rgba(255, 244, 212, 0.16));
+    }
+
+    .river-band {
+      position: absolute;
+      left: 6.8%;
+      right: 6.8%;
+      top: calc(6.8% + (100% - 13.6%) * 4 / 9);
+      height: calc((100% - 13.6%) / 9);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      pointer-events: none;
+      color: rgba(91, 44, 20, 0.68);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(20px, 4.3vmin, 42px);
+      letter-spacing: 0.22em;
+      text-align: center;
+      text-shadow: 0 1px 0 rgba(255, 240, 180, 0.5);
+    }
+
+    .river-band span:first-child {
+      border-right: 1px solid rgba(91, 44, 20, 0.18);
+    }
+
+    .piece-layer,
+    .hint-layer,
+    .heat-layer {
+      position: absolute;
+      inset: 6.8%;
+      pointer-events: none;
+    }
+
+    .heat-layer {
+      opacity: 0;
+      transition: opacity 180ms ease;
+    }
+
+    .heat-layer.active {
+      opacity: 1;
+    }
+
+    .heat-node {
+      position: absolute;
+      width: clamp(22px, 4.2vmin, 42px);
+      height: clamp(22px, 4.2vmin, 42px);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: rgba(44, 130, 98, 0.24);
+      border: 1px solid rgba(157, 235, 190, 0.36);
+      box-shadow: 0 0 26px rgba(30, 126, 92, 0.22);
+    }
+
+    .piece {
+      position: absolute;
+      left: calc(var(--x) * 12.5%);
+      top: calc(var(--y) * 11.111111%);
+      transform: translate(-50%, -50%);
+      width: var(--piece);
+      height: var(--piece);
+      display: grid;
+      place-items: center;
+      pointer-events: auto;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 244, 212, 0.72);
+      background:
+        radial-gradient(circle at 33% 27%, rgba(255, 248, 212, 0.95), rgba(222, 174, 91, 0.9) 37%, rgba(116, 59, 23, 0.92) 100%);
+      box-shadow:
+        inset 0 -6px 12px rgba(0, 0, 0, 0.22),
+        inset 0 3px 8px rgba(255, 255, 255, 0.28),
+        0 9px 18px rgba(0, 0, 0, 0.28);
+      font-family: "Noto Serif CJK SC", "Microsoft YaHei", "SimSun", Georgia, serif;
+      font-size: calc(var(--piece) * 0.52);
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 1px 0 rgba(255, 247, 210, 0.4);
+      transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+    }
+
+    .piece.red {
+      color: #9e211d;
+      border-color: rgba(255, 220, 176, 0.86);
+    }
+
+    .piece.black {
+      color: #16110f;
+      background:
+        radial-gradient(circle at 33% 27%, rgba(255, 248, 212, 0.95), rgba(205, 161, 82, 0.9) 36%, rgba(62, 44, 28, 0.95) 100%);
+      border-color: rgba(222, 196, 135, 0.8);
+    }
+
+    .piece.selected {
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow:
+        inset 0 -6px 12px rgba(0, 0, 0, 0.22),
+        0 0 0 4px rgba(255, 244, 212, 0.28),
+        0 0 28px rgba(255, 209, 106, 0.65),
+        0 12px 22px rgba(0, 0, 0, 0.34);
+      filter: saturate(1.12);
+      z-index: 5;
+      animation: selectedBreath 1.4s ease-in-out infinite;
+    }
+
+    .piece.selected::before,
+    .piece.selected::after {
+      content: "";
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .piece.selected::before {
+      border: 2px solid rgba(255, 218, 137, 0.88);
+      box-shadow:
+        0 0 22px rgba(255, 211, 105, 0.72),
+        inset 0 0 18px rgba(255, 244, 212, 0.2);
+      animation: selectedRing 1.15s ease-out infinite;
+    }
+
+    .piece.selected::after {
+      inset: -5px;
+      border: 1px dashed rgba(29, 111, 94, 0.78);
+      animation: selectedOrbit 3.2s linear infinite;
+    }
+
+    .piece.last-move {
+      box-shadow:
+        inset 0 -6px 12px rgba(0, 0, 0, 0.22),
+        0 0 0 4px rgba(29, 111, 94, 0.4),
+        0 9px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .move-dot,
+    .capture-dot,
+    .hint-dot,
+    .coach-mark,
+    .intent-mark,
+    .plan-mark,
+    .last-move-mark {
+      position: absolute;
+      left: calc(var(--x) * 12.5%);
+      top: calc(var(--y) * 11.111111%);
+      transform: translate(-50%, -50%);
+      width: clamp(15px, 3vmin, 27px);
+      height: clamp(15px, 3vmin, 27px);
+      border-radius: 50%;
+      background: rgba(29, 111, 94, 0.82);
+      border: 2px solid rgba(255, 244, 212, 0.78);
+      box-shadow: 0 0 20px rgba(29, 111, 94, 0.55);
+      pointer-events: none;
+    }
+
+    .capture-dot {
+      width: calc(var(--piece) * 1.08);
+      height: calc(var(--piece) * 1.08);
+      background: transparent;
+      border: 3px solid rgba(220, 67, 49, 0.9);
+      box-shadow: 0 0 26px rgba(220, 67, 49, 0.55);
+    }
+
+    .hint-dot {
+      width: calc(var(--piece) * 0.86);
+      height: calc(var(--piece) * 0.86);
+      background: rgba(255, 211, 105, 0.16);
+      border-color: rgba(255, 211, 105, 0.94);
+      box-shadow: 0 0 26px rgba(255, 211, 105, 0.64);
+    }
+
+    .coach-mark {
+      width: calc(var(--piece) * 1.18);
+      height: calc(var(--piece) * 1.18);
+      background: rgba(255, 211, 105, 0.12);
+      border: 3px solid rgba(255, 211, 105, 0.94);
+      box-shadow:
+        0 0 32px rgba(255, 211, 105, 0.72),
+        inset 0 0 18px rgba(255, 244, 212, 0.24);
+      animation: coachPop 780ms ease-out infinite alternate;
+    }
+
+    .coach-mark.target {
+      border-color: rgba(195, 241, 216, 0.96);
+      background: rgba(29, 111, 94, 0.2);
+      box-shadow:
+        0 0 34px rgba(140, 197, 173, 0.78),
+        inset 0 0 18px rgba(255, 244, 212, 0.18);
+    }
+
+    .intent-mark,
+    .plan-mark {
+      width: calc(var(--piece) * 1.16);
+      height: calc(var(--piece) * 1.16);
+      border-width: 3px;
+      animation: coachPop 760ms ease-out infinite alternate;
+    }
+
+    .intent-mark {
+      border-color: rgba(255, 180, 166, 0.96);
+      background: rgba(201, 53, 40, 0.16);
+      box-shadow:
+        0 0 34px rgba(201, 53, 40, 0.62),
+        inset 0 0 18px rgba(255, 244, 212, 0.18);
+    }
+
+    .intent-mark.target {
+      background: rgba(201, 53, 40, 0.25);
+      box-shadow:
+        0 0 40px rgba(201, 53, 40, 0.72),
+        inset 0 0 20px rgba(255, 244, 212, 0.2);
+    }
+
+    .plan-mark {
+      border-color: rgba(195, 241, 216, 0.96);
+      background: rgba(29, 111, 94, 0.18);
+      box-shadow:
+        0 0 34px rgba(29, 111, 94, 0.65),
+        inset 0 0 18px rgba(255, 244, 212, 0.18);
+    }
+
+    .plan-mark.target {
+      border-color: rgba(255, 244, 212, 0.95);
+      background: rgba(140, 197, 173, 0.22);
+    }
+
+    .coach-mark::after,
+    .intent-mark::after,
+    .plan-mark::after,
+    .last-move-mark::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      transform: translate(-50%, 5px);
+      min-width: 42px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff7dc;
+      background: rgba(23, 17, 13, 0.76);
+      border: 1px solid rgba(255, 244, 212, 0.2);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .last-move-mark {
+      width: calc(var(--piece) * 0.82);
+      height: calc(var(--piece) * 0.82);
+      background: rgba(255, 244, 212, 0.06);
+      border: 2px solid rgba(255, 244, 212, 0.7);
+      box-shadow: 0 0 20px rgba(255, 244, 212, 0.32);
+    }
+
+    .last-move-mark.to {
+      border-color: rgba(29, 111, 94, 0.92);
+      background: rgba(29, 111, 94, 0.16);
+      box-shadow: 0 0 24px rgba(29, 111, 94, 0.5);
+    }
+
+    .coach-route-svg,
+    .intent-route-svg,
+    .plan-route-svg,
+    .last-route-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .coach-route {
+      stroke: rgba(255, 211, 105, 0.96);
+      stroke-width: 0.075;
+      stroke-linecap: round;
+      stroke-dasharray: 0.22 0.16;
+      filter: drop-shadow(0 0 0.13px rgba(255, 244, 212, 0.9));
+      animation: routeDash 650ms linear infinite;
+    }
+
+    .last-route {
+      stroke: rgba(29, 111, 94, 0.72);
+      stroke-width: 0.045;
+      stroke-linecap: round;
+      stroke-dasharray: 0.13 0.1;
+      animation: routeDash 1.3s linear infinite;
+    }
+
+    .intent-route {
+      stroke: rgba(255, 111, 90, 0.96);
+      stroke-width: 0.07;
+      stroke-linecap: round;
+      stroke-dasharray: 0.17 0.12;
+      filter: drop-shadow(0 0 0.12px rgba(255, 180, 166, 0.9));
+      animation: routeDash 620ms linear infinite;
+    }
+
+    .plan-route {
+      stroke: rgba(195, 241, 216, 0.98);
+      stroke-width: 0.075;
+      stroke-linecap: round;
+      stroke-dasharray: 0.2 0.13;
+      filter: drop-shadow(0 0 0.14px rgba(140, 197, 173, 0.95));
+      animation: routeDash 680ms linear infinite;
+    }
+
+    .coord-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      color: rgba(91, 44, 20, 0.74);
+      font-size: clamp(10px, 1.8vmin, 15px);
+      font-weight: 900;
+      text-shadow: 0 1px 0 rgba(255, 244, 212, 0.46);
+      z-index: 1;
+    }
+
+    .coord-label {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 18px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: rgba(255, 244, 212, 0.22);
+      border: 1px solid rgba(91, 44, 20, 0.16);
+    }
+
+    .coord-label.col.top {
+      left: calc(6.8% + var(--i) * 10.8%);
+      top: 3.1%;
+    }
+
+    .coord-label.col.bottom {
+      left: calc(6.8% + var(--i) * 10.8%);
+      top: 96.9%;
+    }
+
+    .coord-label.row.left {
+      left: 3.1%;
+      top: calc(6.8% + var(--i) * 9.6%);
+    }
+
+    .coord-label.row.right {
+      left: 96.9%;
+      top: calc(6.8% + var(--i) * 9.6%);
+    }
+
+    .selection-aura {
+      position: absolute;
+      left: calc(var(--x) * 12.5%);
+      top: calc(var(--y) * 11.111111%);
+      width: calc(var(--piece) * 1.72);
+      height: calc(var(--piece) * 1.72);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(255, 244, 212, 0.3) 0 18%, rgba(255, 211, 105, 0.16) 19% 42%, transparent 43% 100%);
+      border: 1px solid rgba(255, 211, 105, 0.5);
+      box-shadow: 0 0 30px rgba(255, 211, 105, 0.45);
+      animation: auraPulse 1.15s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .selection-spark {
+      position: absolute;
+      left: calc(var(--x) * 12.5%);
+      top: calc(var(--y) * 11.111111%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff4d4;
+      box-shadow: 0 0 12px rgba(255, 244, 212, 0.9);
+      transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy)));
+      animation: sparkFlicker 900ms ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes selectedBreath {
+      0%, 100% { filter: saturate(1.1) brightness(1); }
+      50% { filter: saturate(1.3) brightness(1.08); }
+    }
+
+    @keyframes selectedRing {
+      0% { opacity: 0.95; transform: scale(0.9); }
+      100% { opacity: 0; transform: scale(1.34); }
+    }
+
+    @keyframes selectedOrbit {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes auraPulse {
+      0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.94); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+    }
+
+    @keyframes sparkFlicker {
+      from { opacity: 0.35; }
+      to { opacity: 1; }
+    }
+
+    @keyframes coachPop {
+      from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.74; }
+      to { transform: translate(-50%, -50%) scale(1.09); opacity: 1; }
+    }
+
+    @keyframes routeDash {
+      to { stroke-dashoffset: -0.76; }
+    }
+
+    .board-footer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      color: rgba(255, 244, 212, 0.72);
+      font-size: 13px;
+    }
+
+    .captured-line {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .mini-piece {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 244, 212, 0.14);
+      border: 1px solid rgba(255, 244, 212, 0.22);
+      font-family: "Noto Serif CJK SC", "Microsoft YaHei", serif;
+      color: #ffeab0;
+      font-weight: 900;
+    }
+
+    .side-panel {
+      display: grid;
+      gap: 12px;
+      position: sticky;
+      top: 18px;
+      min-width: 0;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(23, 17, 13, 0.72);
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      box-shadow: var(--shadow);
+    }
+
+    .tab-btn {
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 7px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .tab-btn.active {
+      background: rgba(220, 168, 77, 0.24);
+      border-color: rgba(255, 218, 137, 0.58);
+      color: #fff3cb;
+    }
+
+    .panel {
+      display: none;
+      border-radius: 8px;
+      background: rgba(23, 17, 13, 0.76);
+      border: 1px solid rgba(255, 244, 212, 0.14);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .panel-header {
+      padding: 15px 16px 12px;
+      border-bottom: 1px solid rgba(255, 244, 212, 0.1);
+      background: linear-gradient(90deg, rgba(220, 168, 77, 0.16), rgba(29, 111, 94, 0.1));
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .panel-header p {
+      margin: 6px 0 0;
+      color: rgba(255, 244, 212, 0.68);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .panel-body {
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 13px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: rgba(255, 244, 212, 0.65);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .field select {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.16);
+      background: rgba(255, 244, 212, 0.09);
+      color: var(--ivory);
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .field input,
+    .room-line input,
+    .secret-line input {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.16);
+      background: rgba(255, 244, 212, 0.09);
+      color: var(--ivory);
+      padding: 0 10px;
+      outline: none;
+    }
+
+    .field input::placeholder,
+    .room-line input::placeholder,
+    .secret-line input::placeholder {
+      color: rgba(255, 244, 212, 0.43);
+    }
+
+    .field select option {
+      background: #1c1510;
+      color: var(--ivory);
+    }
+
+    .coach-box,
+    .online-room,
+    .coach-lock,
+    .love-note,
+    .move-history,
+    .progress-box,
+    .book-line {
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.12);
+      background: rgba(255, 244, 212, 0.07);
+    }
+
+    .online-room,
+    .coach-lock,
+    .love-note {
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .online-room header,
+    .coach-lock header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .online-room h3,
+    .coach-lock h3,
+    .love-note strong {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0;
+      color: #ffe7a7;
+    }
+
+    .online-room p,
+    .coach-lock p,
+    .love-note span {
+      margin: 0;
+      color: rgba(255, 244, 212, 0.68);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .connection-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      color: rgba(255, 244, 212, 0.76);
+      background: rgba(255, 244, 212, 0.08);
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    body.online-connected .connection-pill {
+      color: #d4ffe7;
+      background: rgba(29, 111, 94, 0.25);
+      border-color: rgba(140, 197, 173, 0.48);
+    }
+
+    .room-line,
+    .secret-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .room-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .room-actions .text-btn {
+      min-width: 0;
+      padding: 0 9px;
+    }
+
+    .love-note {
+      background:
+        linear-gradient(135deg, rgba(201, 53, 40, 0.15), rgba(29, 111, 94, 0.13)),
+        rgba(255, 244, 212, 0.06);
+    }
+
+    .coach-box {
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .coach-box h3,
+    .move-history h3,
+    .progress-box h3 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0;
+      color: #ffe7a7;
+    }
+
+    .coach-list {
+      margin: 0;
+      padding-left: 17px;
+      color: rgba(255, 244, 212, 0.76);
+      font-size: 13px;
+      line-height: 1.48;
+    }
+
+    .coach-list li + li {
+      margin-top: 6px;
+    }
+
+    .meter {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 244, 212, 0.12);
+      overflow: hidden;
+      border: 1px solid rgba(255, 244, 212, 0.12);
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #c93528, #dca84d, #1d6f5e);
+      transition: width 220ms ease;
+    }
+
+    .move-history {
+      overflow: hidden;
+    }
+
+    .move-history h3 {
+      padding: 11px 12px 0;
+    }
+
+    .history-list {
+      max-height: 210px;
+      overflow: auto;
+      padding: 8px 12px 12px;
+      display: grid;
+      gap: 7px;
+      scrollbar-color: rgba(255, 244, 212, 0.3) transparent;
+    }
+
+    .history-row {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      color: rgba(255, 244, 212, 0.72);
+    }
+
+    .history-row strong {
+      color: #fff2bd;
+    }
+
+    .lesson-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    .lesson-btn {
+      width: 100%;
+      min-height: 74px;
+      text-align: left;
+      padding: 11px 12px;
+      display: grid;
+      gap: 4px;
+      align-content: center;
+    }
+
+    .lesson-btn.active {
+      background: rgba(29, 111, 94, 0.24);
+      border-color: rgba(140, 197, 173, 0.46);
+    }
+
+    .lesson-btn.done {
+      border-color: rgba(220, 168, 77, 0.5);
+    }
+
+    .lesson-btn strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: #fff1c0;
+      font-size: 14px;
+    }
+
+    .lesson-btn span {
+      color: rgba(255, 244, 212, 0.66);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: rgba(255, 244, 212, 0.1);
+      border: 1px solid rgba(255, 244, 212, 0.13);
+      color: rgba(255, 244, 212, 0.74);
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .book-line {
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .book-line strong {
+      color: #fff1c0;
+      font-size: 14px;
+    }
+
+    .book-line p {
+      margin: 0;
+      color: rgba(255, 244, 212, 0.68);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .book-btn {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 11px;
+      font-weight: 800;
+      justify-self: start;
+    }
+
+    .progress-box {
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .progress-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .step {
+      min-height: 46px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.12);
+      background: rgba(255, 244, 212, 0.07);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 6px;
+      color: rgba(255, 244, 212, 0.64);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .step.done {
+      color: #fff5cf;
+      background: rgba(220, 168, 77, 0.2);
+      border-color: rgba(220, 168, 77, 0.42);
+    }
+
+    .danger-text {
+      color: #ffb4a6;
+    }
+
+    .success-text {
+      color: #c3f1d8;
+    }
+
+    @media (max-width: 1080px) {
+      .topbar {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "brand"
+          "status"
+          "toolbar";
+      }
+
+      .status-pill {
+        min-width: 0;
+      }
+
+      .toolbar {
+        justify-content: start;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        position: static;
+      }
+
+      .board-stage {
+        width: min(100%, 78vh);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell {
+        padding: 10px;
+      }
+
+      .intel-strip,
+      .field-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tabs {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .board-frame {
+        padding: 8px;
+      }
+
+      .board-stage {
+        min-width: 0;
+        width: 100%;
+      }
+
+      .board-footer {
+        grid-template-columns: 1fr;
+      }
+
+      .brand p {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">帥</div>
+        <div>
+          <h1>Đình Tài ♡ Cát Tiên Xiangqi</h1>
+          <p>A fast, private board for two hearts and one very serious battlefield.</p>
+        </div>
+      </div>
+
+      <div class="status-pill">
+        <strong id="turnStatus">Red to move</strong>
+        <span id="gameStatus">Choose a red piece to begin.</span>
+      </div>
+
+      <div class="toolbar">
+        <button class="icon-btn" id="newGameBtn" title="New game" aria-label="New game"><i data-lucide="sparkles"></i></button>
+        <button class="icon-btn" id="undoBtn" title="Undo move" aria-label="Undo move"><i data-lucide="undo-2"></i></button>
+        <button class="icon-btn offline-only" id="flipBtn" title="Start as Black" aria-label="Start new game as Black"><i data-lucide="rotate-cw"></i></button>
+        <button class="icon-btn coach-unlocked-only" id="hintBtn" title="Coach hint" aria-label="Coach hint"><i data-lucide="lightbulb"></i></button>
+        <button class="text-btn coach-unlocked-only" id="opponentIntentBtn"><i data-lucide="radar"></i>Opponent Plan</button>
+        <button class="text-btn coach-unlocked-only" id="ourPlanBtn"><i data-lucide="route"></i>Our Plan</button>
+        <button class="text-btn offline-only" id="manualModeBtn" title="Toggle manual opponent"><i data-lucide="users"></i>AI Opponent</button>
+        <button class="icon-btn" id="soundFxBtn" title="Sound effects on" aria-label="Toggle sound effects" aria-pressed="true"><i data-lucide="volume-2"></i></button>
+        <button class="icon-btn coach-unlocked-only" id="coachSpeechBtn" title="Coach voice off" aria-label="Toggle coach voice" aria-pressed="false"><i data-lucide="message-circle-off"></i></button>
+        <button class="text-btn primary coach-unlocked-only" id="analyzeBtn"><i data-lucide="scan-search"></i>Analyze</button>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <section class="board-column">
+        <div class="intel-strip">
+          <div class="intel-cell"><span>Evaluation</span><strong id="evalScore">0.00</strong></div>
+          <div class="intel-cell"><span>Phase</span><strong id="phaseLabel">Opening</strong></div>
+          <div class="intel-cell"><span>Pressure</span><strong id="pressureLabel">Center</strong></div>
+          <div class="intel-cell"><span>AI</span><strong id="aiLabel">Dragon</strong></div>
+        </div>
+
+        <div class="board-frame">
+          <div class="board-stage" id="boardStage">
+            <div class="river-band"><span>楚河</span><span>漢界</span></div>
+            <div class="coord-layer" id="coordLayer"></div>
+            <div class="board-inner" id="boardInner">
+              <svg class="board-lines" viewBox="0 0 8 9" preserveAspectRatio="none" aria-hidden="true">
+                <g stroke="#5f2e18" stroke-width="0.035" stroke-linecap="round">
+                  <line x1="0" y1="0" x2="8" y2="0" />
+                  <line x1="0" y1="1" x2="8" y2="1" />
+                  <line x1="0" y1="2" x2="8" y2="2" />
+                  <line x1="0" y1="3" x2="8" y2="3" />
+                  <line x1="0" y1="4" x2="8" y2="4" />
+                  <line x1="0" y1="5" x2="8" y2="5" />
+                  <line x1="0" y1="6" x2="8" y2="6" />
+                  <line x1="0" y1="7" x2="8" y2="7" />
+                  <line x1="0" y1="8" x2="8" y2="8" />
+                  <line x1="0" y1="9" x2="8" y2="9" />
+                  <line x1="0" y1="0" x2="0" y2="9" />
+                  <line x1="1" y1="0" x2="1" y2="4" />
+                  <line x1="2" y1="0" x2="2" y2="4" />
+                  <line x1="3" y1="0" x2="3" y2="4" />
+                  <line x1="4" y1="0" x2="4" y2="4" />
+                  <line x1="5" y1="0" x2="5" y2="4" />
+                  <line x1="6" y1="0" x2="6" y2="4" />
+                  <line x1="7" y1="0" x2="7" y2="4" />
+                  <line x1="8" y1="0" x2="8" y2="9" />
+                  <line x1="1" y1="5" x2="1" y2="9" />
+                  <line x1="2" y1="5" x2="2" y2="9" />
+                  <line x1="3" y1="5" x2="3" y2="9" />
+                  <line x1="4" y1="5" x2="4" y2="9" />
+                  <line x1="5" y1="5" x2="5" y2="9" />
+                  <line x1="6" y1="5" x2="6" y2="9" />
+                  <line x1="7" y1="5" x2="7" y2="9" />
+                  <line x1="3" y1="0" x2="5" y2="2" />
+                  <line x1="5" y1="0" x2="3" y2="2" />
+                  <line x1="3" y1="7" x2="5" y2="9" />
+                  <line x1="5" y1="7" x2="3" y2="9" />
+                </g>
+              </svg>
+            </div>
+            <div class="heat-layer" id="heatLayer"></div>
+            <div class="hint-layer" id="hintLayer"></div>
+            <div class="piece-layer" id="pieceLayer"></div>
+          </div>
+
+          <div class="board-footer">
+            <div class="captured-line" id="capturedLine"></div>
+            <button class="text-btn" id="resumeBtn"><i data-lucide="swords"></i>Resume Match</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <nav class="tabs" aria-label="Training panels">
+          <button class="tab-btn active" data-tab="play"><i data-lucide="bot"></i>Play</button>
+          <button class="tab-btn coach-unlocked-only" data-tab="train"><i data-lucide="graduation-cap"></i>Train</button>
+          <button class="tab-btn coach-unlocked-only" data-tab="book"><i data-lucide="book-open"></i>Book</button>
+          <button class="tab-btn coach-unlocked-only" data-tab="review"><i data-lucide="clipboard-list"></i>Review</button>
+        </nav>
+
+        <section class="panel active" id="panel-play">
+          <div class="panel-header">
+            <h2>Đình Tài vs Cát Tiên</h2>
+            <p>Red hosts, Black joins, and the board keeps both browsers in sync.</p>
+          </div>
+          <div class="panel-body">
+            <div class="online-room">
+              <header>
+                <h3>Online Room</h3>
+                <span class="connection-pill" id="connectionStatus">Offline</span>
+              </header>
+              <div class="room-line">
+                <input id="roomCodeInput" type="text" inputmode="latin" autocomplete="off" spellcheck="false" placeholder="room code" />
+                <button class="icon-btn" id="copyInviteBtn" title="Copy invite link" aria-label="Copy invite link"><i data-lucide="copy"></i></button>
+              </div>
+              <div class="room-actions">
+                <button class="text-btn primary" id="hostRoomBtn"><i data-lucide="radio-tower"></i>Host</button>
+                <button class="text-btn" id="joinRoomBtn"><i data-lucide="log-in"></i>Join</button>
+                <button class="text-btn" id="disconnectRoomBtn"><i data-lucide="unlink"></i>Leave</button>
+              </div>
+            </div>
+
+            <div class="love-note">
+              <strong>Đình Tài ♡ Cát Tiên</strong>
+              <span>Play bravely, forgive blunders softly, and let every rematch be another date.</span>
+            </div>
+
+            <div class="field-grid">
+              <div class="field offline-only">
+                <label for="difficultySelect">Strength</label>
+                <select id="difficultySelect">
+                  <option value="emperor" selected>Emperor depth 7</option>
+                  <option value="dragon">Dragon depth 6</option>
+                  <option value="master">Master depth 5</option>
+                  <option value="club">Club depth 4</option>
+                  <option value="student">Student depth 3</option>
+                </select>
+              </div>
+              <div class="field offline-only">
+                <label for="styleSelect">Opponent</label>
+                <select id="styleSelect">
+                  <option value="aggressive" selected>Fast attack</option>
+                  <option value="fortress">Hard defense</option>
+                  <option value="balanced">Balanced pro</option>
+                </select>
+              </div>
+              <div class="field coach-unlocked-only">
+                <label for="coachLevelSelect">Coach Engine</label>
+                <select id="coachLevelSelect">
+                  <option value="1">Smart 1 quick plan</option>
+                  <option value="2" selected>Smart 2 strategy coach</option>
+                </select>
+              </div>
+              <div class="field coach-unlocked-only">
+                <label for="coachLanguageSelect">Coach Voice</label>
+                <select id="coachLanguageSelect">
+                  <option value="en-US">English coach</option>
+                  <option value="vi-VN">Vietnamese coach</option>
+                </select>
+              </div>
+              <div class="field coach-unlocked-only">
+                <label for="coachVoiceSelect">Voice Style</label>
+                <select id="coachVoiceSelect">
+                  <option value="auto">Auto voice</option>
+                  <option value="male">Man coach</option>
+                  <option value="female">Girl coach</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="coach-lock coach-locked-only">
+              <header>
+                <h3>Private Coach</h3>
+                <span class="connection-pill">Locked</span>
+              </header>
+              <div class="secret-line">
+                <input id="coachPasswordInput" type="password" autocomplete="off" placeholder="password" />
+                <button class="icon-btn" id="unlockCoachBtn" title="Unlock private coach" aria-label="Unlock private coach"><i data-lucide="lock-keyhole"></i></button>
+              </div>
+            </div>
+
+            <div class="coach-box coach-unlocked-only">
+              <h3>Live Coach</h3>
+              <ul class="coach-list" id="coachList"></ul>
+              <div class="meter"><div class="meter-fill" id="evalMeter"></div></div>
+            </div>
+
+            <div class="move-history">
+              <h3>Move Record</h3>
+              <div class="history-list" id="historyList"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-train">
+          <div class="panel-header">
+            <h2>Professional Training Hall</h2>
+            <p>Opening command, fast attack, fortress defense, counterattack, and endgame conversion.</p>
+          </div>
+          <div class="panel-body">
+            <div class="progress-box">
+              <h3>Player Path</h3>
+              <div class="progress-steps" id="progressSteps"></div>
+              <div class="meter"><div class="meter-fill" id="trainingMeter"></div></div>
+            </div>
+            <div class="lesson-grid" id="lessonGrid"></div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-book">
+          <div class="panel-header">
+            <h2>Attack And Defense Book</h2>
+            <p>Use these professional plans to build the position you want before tactics begin.</p>
+          </div>
+          <div class="panel-body" id="bookPanel"></div>
+        </section>
+
+        <section class="panel" id="panel-review">
+          <div class="panel-header">
+            <h2>Posture Review</h2>
+            <p>Read the field: king safety, central files, river control, and initiative.</p>
+          </div>
+          <div class="panel-body">
+            <div class="coach-box">
+              <h3>Position Diagnosis</h3>
+              <ul class="coach-list" id="reviewList"></ul>
+            </div>
+            <div class="coach-box">
+              <h3>Professional Habits</h3>
+              <ul class="coach-list">
+                <li>Win the center before launching side attacks.</li>
+                <li>Do not attack with one piece. Build a cannon, horse, and rook triangle.</li>
+                <li>When defending, close the file first, then trade the attacker.</li>
+                <li>In endgames, active king and connected soldiers matter more than passive material.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const ROWS = 10;
+    const COLS = 9;
+    const RED = "red";
+    const BLACK = "black";
+    const INF = 100000000;
+    const MATE = 9000000;
+
+    const GLYPH = {
+      red: { K: "帥", A: "仕", E: "相", H: "傌", R: "俥", C: "炮", S: "兵" },
+      black: { K: "將", A: "士", E: "象", H: "馬", R: "車", C: "砲", S: "卒" }
+    };
+
+    const NAME = {
+      K: "General",
+      A: "Advisor",
+      E: "Elephant",
+      H: "Horse",
+      R: "Chariot",
+      C: "Cannon",
+      S: "Soldier"
+    };
+
+    const VALUE = {
+      K: 100000,
+      R: 950,
+      C: 520,
+      H: 455,
+      E: 220,
+      A: 220,
+      S: 120
+    };
+
+    const DIFFICULTY = {
+      student: { label: "Student", depth: 3, time: 420 },
+      club: { label: "Club", depth: 4, time: 900 },
+      master: { label: "Master", depth: 5, time: 1800 },
+      dragon: { label: "Dragon", depth: 6, time: 3200 },
+      emperor: { label: "Emperor", depth: 7, time: 4600 }
+    };
+
+    const STYLE = {
+      normal: {
+        label: "Normal",
+        attack: 1.12,
+        defense: 1.12,
+        center: 1.18,
+        goal: "play the strongest balanced move while preserving king safety and initiative"
+      },
+      defensive: {
+        label: "Defensive",
+        attack: 0.92,
+        defense: 1.5,
+        center: 1.08,
+        goal: "reduce danger first, trade active attackers, and keep palace defenders connected"
+      },
+      attacking: {
+        label: "Attacking",
+        attack: 1.52,
+        defense: 0.9,
+        center: 1.2,
+        goal: "open attacking files, create forcing checks, and overload the enemy palace"
+      },
+      unique: {
+        label: "Unique",
+        attack: 1.28,
+        defense: 1,
+        center: 1.34,
+        surprise: 1.22,
+        goal: "find creative piece activity and unusual pressure that is still tactically sound"
+      },
+      aggressive: {
+        label: "Fast attack",
+        attack: 1.36,
+        defense: 0.84,
+        center: 1.18,
+        goal: "attack quickly and keep initiative"
+      },
+      fortress: {
+        label: "Hard defense",
+        attack: 0.9,
+        defense: 1.34,
+        center: 1.04,
+        goal: "build a stable fortress before counterplay"
+      },
+      balanced: {
+        label: "Balanced pro",
+        attack: 1.06,
+        defense: 1.06,
+        center: 1.12,
+        goal: "keep a balanced professional structure"
+      }
+    };
+
+    const COACH_LEVEL = {
+      "1": {
+        level: 1,
+        label: "Smart 1 Quick Plan",
+        modeLabel: "quick tactical read",
+        depth: 4,
+        time: 900,
+        replyDepth: 3,
+        replyTime: 320,
+        primary: "normal",
+        styles: ["normal"],
+        ensemble: false,
+        probes: 0,
+        goal: "find one clean move, favoring king safety, open files, and simple tactics"
+      },
+      "2": {
+        level: 2,
+        label: "Smart 2 Strategy Coach",
+        modeLabel: "strategy blend",
+        depth: 5,
+        time: 1700,
+        replyDepth: 4,
+        replyTime: 560,
+        primary: "normal",
+        styles: ["normal", "attacking", "defensive"],
+        ensemble: true,
+        probes: 2,
+        goal: "compare attack, defense, and central control before choosing the most practical plan"
+      }
+    };
+
+    const TT_EXACT = 0;
+    const TT_LOWER = 1;
+    const TT_UPPER = 2;
+    const MAX_TRANSPOSITION = 70000;
+    const MAX_ENGINE_CACHE = 96;
+    const MAX_COACH_CACHE = 48;
+    const MAX_MOVE_CACHE = 2400;
+    const engineResultCache = new Map();
+    const coachHintCache = new Map();
+    const legalMoveCache = new Map();
+
+    const HORSE_STEPS = [
+      { dr: -2, dc: -1, lr: -1, lc: 0 },
+      { dr: -2, dc: 1, lr: -1, lc: 0 },
+      { dr: 2, dc: -1, lr: 1, lc: 0 },
+      { dr: 2, dc: 1, lr: 1, lc: 0 },
+      { dr: -1, dc: -2, lr: 0, lc: -1 },
+      { dr: 1, dc: -2, lr: 0, lc: -1 },
+      { dr: -1, dc: 2, lr: 0, lc: 1 },
+      { dr: 1, dc: 2, lr: 0, lc: 1 }
+    ];
+
+    const DIRS = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1]
+    ];
+
+    const PRIVATE_COACH_PASSWORD = "dinh-tai-cat-tien";
+    const PLAYER_NAME = {
+      red: "Đình Tài",
+      black: "Cát Tiên"
+    };
+    const ONLINE_PREFIX = "dtct-xiangqi";
+
+    const state = {
+      board: createInitialBoard(),
+      sideToMove: RED,
+      playerColor: RED,
+      aiColor: BLACK,
+      selected: null,
+      selectedMoves: [],
+      history: [],
+      captured: { red: [], black: [] },
+      flipped: false,
+      gameOver: false,
+      aiThinking: false,
+      lastMove: null,
+      training: null,
+      hintMove: null,
+      heatActive: false,
+      notice: null,
+      coachThinking: false,
+      coachAdvice: null,
+      analysisView: null,
+      autoOurPlan: readBooleanSetting("xiangqi-pro-auto-our-plan", false),
+      soundEnabled: readBooleanSetting("xiangqi-pro-sound", true),
+      aiEnabled: readBooleanSetting("xiangqi-pro-ai-enabled", false),
+      coachUnlocked: readBooleanSetting("dtct-xiangqi-coach-unlocked", false),
+      coachSpeechEnabled: readBooleanSetting("xiangqi-pro-coach-speech", false),
+      coachLanguage: readTextSetting("xiangqi-pro-coach-language", "en-US"),
+      coachVoiceStyle: readTextSetting("xiangqi-pro-coach-voice", "auto"),
+      coachLevel: readTextSetting("xiangqi-pro-coach-level", "2"),
+      online: {
+        peer: null,
+        conn: null,
+        role: null,
+        roomId: "",
+        connected: false,
+        status: "Offline"
+      },
+      progress: readProgress()
+    };
+
+    let audioCtx = null;
+    let autoPlanTimer = null;
+    let ourPlanRequestId = 0;
+    let activeOurPlanRequestId = 0;
+    const renderCache = {
+      coords: null,
+      book: null,
+      training: null,
+      coach: null,
+      history: null,
+      captured: null,
+      buttons: null
+    };
+    let iconsDirty = true;
+
+    const els = {
+      boardStage: document.getElementById("boardStage"),
+      boardInner: document.getElementById("boardInner"),
+      coordLayer: document.getElementById("coordLayer"),
+      pieceLayer: document.getElementById("pieceLayer"),
+      hintLayer: document.getElementById("hintLayer"),
+      heatLayer: document.getElementById("heatLayer"),
+      turnStatus: document.getElementById("turnStatus"),
+      gameStatus: document.getElementById("gameStatus"),
+      evalScore: document.getElementById("evalScore"),
+      phaseLabel: document.getElementById("phaseLabel"),
+      pressureLabel: document.getElementById("pressureLabel"),
+      aiLabel: document.getElementById("aiLabel"),
+      coachList: document.getElementById("coachList"),
+      reviewList: document.getElementById("reviewList"),
+      historyList: document.getElementById("historyList"),
+      capturedLine: document.getElementById("capturedLine"),
+      evalMeter: document.getElementById("evalMeter"),
+      trainingMeter: document.getElementById("trainingMeter"),
+      progressSteps: document.getElementById("progressSteps"),
+      lessonGrid: document.getElementById("lessonGrid"),
+      bookPanel: document.getElementById("bookPanel"),
+      difficultySelect: document.getElementById("difficultySelect"),
+      styleSelect: document.getElementById("styleSelect"),
+      coachLevelSelect: document.getElementById("coachLevelSelect"),
+      coachLanguageSelect: document.getElementById("coachLanguageSelect"),
+      coachVoiceSelect: document.getElementById("coachVoiceSelect"),
+      roomCodeInput: document.getElementById("roomCodeInput"),
+      connectionStatus: document.getElementById("connectionStatus"),
+      hostRoomBtn: document.getElementById("hostRoomBtn"),
+      joinRoomBtn: document.getElementById("joinRoomBtn"),
+      copyInviteBtn: document.getElementById("copyInviteBtn"),
+      disconnectRoomBtn: document.getElementById("disconnectRoomBtn"),
+      coachPasswordInput: document.getElementById("coachPasswordInput"),
+      unlockCoachBtn: document.getElementById("unlockCoachBtn"),
+      opponentIntentBtn: document.getElementById("opponentIntentBtn"),
+      ourPlanBtn: document.getElementById("ourPlanBtn"),
+      manualModeBtn: document.getElementById("manualModeBtn"),
+      soundFxBtn: document.getElementById("soundFxBtn"),
+      coachSpeechBtn: document.getElementById("coachSpeechBtn")
+    };
+
+    const TRAINING = [
+      {
+        id: "central-cannon",
+        path: "Opening",
+        title: "Start Strong: Central Cannon",
+        summary: "Occupy the middle file and force Black to answer your tempo.",
+        board: createInitialBoard,
+        target: { from: [7, 1], to: [7, 4] },
+        success: "Good. The central cannon makes the game about Black's king immediately.",
+        miss: "Look for the move that puts your cannon on the central file.",
+        insight: "Professional opening habit: claim the central file, then develop horses with tempo."
+      },
+      {
+        id: "fast-horse",
+        path: "Attack",
+        title: "Fast Attack: Horse Fork",
+        summary: "Use the horse leg rule to hit a valuable target while keeping pressure.",
+        board: horseForkBoard,
+        target: { from: [4, 3], to: [2, 4] },
+        success: "Sharp. The horse jumps into the palace edge and wins the chariot.",
+        miss: "Find the horse move that attacks through an open leg and captures the exposed chariot.",
+        insight: "Professional attack habit: do not chase. Improve a piece while creating a threat."
+      },
+      {
+        id: "file-block",
+        path: "Defense",
+        title: "Hard Defense: Close The File",
+        summary: "When a rook owns your king file, block first and breathe.",
+        board: fileBlockBoard,
+        target: { from: [9, 3], to: [8, 4] },
+        success: "Excellent. Closing the file ends the emergency before you counterattack.",
+        miss: "The king file is the danger. Use a palace defender to seal it.",
+        insight: "Professional defense habit: stop direct checks before hunting material."
+      },
+      {
+        id: "cannon-screen",
+        path: "Counter",
+        title: "Counterattack: Cannon Screen",
+        summary: "Create a screen so your cannon becomes a long-range weapon.",
+        board: cannonScreenBoard,
+        target: { from: [6, 4], to: [5, 4] },
+        success: "Strong. The soldier becomes a screen and your cannon starts staring at the king.",
+        miss: "The cannon needs a screen on the same file. Move the soldier with purpose.",
+        insight: "Professional counter habit: a quiet screen move can be more violent than a capture."
+      },
+      {
+        id: "soldier-endgame",
+        path: "Endgame",
+        title: "Endgame: River Soldier",
+        summary: "Advance the crossed soldier while keeping king opposition.",
+        board: soldierEndgameBoard,
+        target: { from: [4, 4], to: [3, 4] },
+        success: "Clean. A crossed soldier must keep walking when the file is clear.",
+        miss: "Use the passed soldier. Every step tightens the enemy king.",
+        insight: "Professional endgame habit: passed soldiers are attackers, blockers, and tempo makers."
+      }
+    ];
+
+    const BOOK = [
+      {
+        title: "Central Cannon Attack",
+        style: "Fast attack",
+        move: { from: [7, 1], to: [7, 4] },
+        notation: "炮二平五",
+        plan: "Open with central cannon, develop the right horse, and bring a rook to the open file. Best when you want initiative."
+      },
+      {
+        title: "Screen Horse Fortress",
+        style: "Hard defense",
+        move: { from: [9, 1], to: [7, 2] },
+        notation: "馬八進七",
+        plan: "Develop a horse before committing the cannon. It keeps your palace flexible and prepares a tough counter."
+      },
+      {
+        title: "River Pawn Probe",
+        style: "Balanced pro",
+        move: { from: [6, 4], to: [5, 4] },
+        notation: "兵五進一",
+        plan: "Take space first, test Black's center, and choose attack or defense after seeing the response."
+      }
+    ];
+
+    function createPiece(color, type, id) {
+      return { color, type, id: `${color}-${type}-${id}` };
+    }
+
+    function emptyBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function createInitialBoard() {
+      const board = emptyBoard();
+      const back = ["R", "H", "E", "A", "K", "A", "E", "H", "R"];
+      back.forEach((type, c) => {
+        board[0][c] = createPiece(BLACK, type, `0-${c}`);
+        board[9][c] = createPiece(RED, type, `9-${c}`);
+      });
+      board[2][1] = createPiece(BLACK, "C", "2-1");
+      board[2][7] = createPiece(BLACK, "C", "2-7");
+      board[7][1] = createPiece(RED, "C", "7-1");
+      board[7][7] = createPiece(RED, "C", "7-7");
+      [0, 2, 4, 6, 8].forEach((c) => {
+        board[3][c] = createPiece(BLACK, "S", `3-${c}`);
+        board[6][c] = createPiece(RED, "S", `6-${c}`);
+      });
+      return board;
+    }
+
+    function horseForkBoard() {
+      const board = emptyBoard();
+      board[0][4] = createPiece(BLACK, "K", "train-k");
+      board[0][3] = createPiece(BLACK, "A", "train-a1");
+      board[0][5] = createPiece(BLACK, "A", "train-a2");
+      board[2][4] = createPiece(BLACK, "R", "train-r");
+      board[9][4] = createPiece(RED, "K", "train-rk");
+      board[8][4] = createPiece(RED, "A", "train-ra");
+      board[4][3] = createPiece(RED, "H", "train-h");
+      board[6][4] = createPiece(RED, "S", "train-s");
+      return board;
+    }
+
+    function fileBlockBoard() {
+      const board = emptyBoard();
+      board[0][4] = createPiece(BLACK, "K", "train-bk");
+      board[5][4] = createPiece(BLACK, "R", "train-br");
+      board[9][4] = createPiece(RED, "K", "train-rk");
+      board[9][3] = createPiece(RED, "A", "train-ra");
+      board[9][5] = createPiece(RED, "A", "train-ra2");
+      board[7][2] = createPiece(RED, "E", "train-re");
+      return board;
+    }
+
+    function cannonScreenBoard() {
+      const board = emptyBoard();
+      board[0][4] = createPiece(BLACK, "K", "train-bk");
+      board[9][4] = createPiece(RED, "K", "train-rk");
+      board[7][4] = createPiece(RED, "C", "train-c");
+      board[6][4] = createPiece(RED, "S", "train-s");
+      board[3][4] = createPiece(BLACK, "S", "train-bs");
+      board[0][3] = createPiece(BLACK, "A", "train-ba");
+      board[0][5] = createPiece(BLACK, "A", "train-ba2");
+      return board;
+    }
+
+    function soldierEndgameBoard() {
+      const board = emptyBoard();
+      board[0][4] = createPiece(BLACK, "K", "train-bk");
+      board[1][3] = createPiece(BLACK, "A", "train-ba");
+      board[9][4] = createPiece(RED, "K", "train-rk");
+      board[4][4] = createPiece(RED, "S", "train-s");
+      board[8][4] = createPiece(RED, "A", "train-ra");
+      return board;
+    }
+
+    function cloneBoard(board) {
+      return board.map((row) => row.slice());
+    }
+
+    function inside(r, c) {
+      return r >= 0 && r < ROWS && c >= 0 && c < COLS;
+    }
+
+    function other(color) {
+      return color === RED ? BLACK : RED;
+    }
+
+    function playerLabel(color) {
+      return PLAYER_NAME[color] || (color === RED ? "Red" : "Black");
+    }
+
+    function localPlayerLabel() {
+      return playerLabel(state.playerColor);
+    }
+
+    function palace(color, r, c) {
+      if (c < 3 || c > 5) return false;
+      return color === RED ? r >= 7 && r <= 9 : r >= 0 && r <= 2;
+    }
+
+    function crossedRiver(color, r) {
+      return color === RED ? r <= 4 : r >= 5;
+    }
+
+    function forward(color) {
+      return color === RED ? -1 : 1;
+    }
+
+    function canLand(board, color, r, c, capturesOnly) {
+      if (!inside(r, c)) return false;
+      const target = board[r][c];
+      if (!target) return !capturesOnly;
+      return target.color !== color;
+    }
+
+    function addStepMove(board, moves, color, from, r, c, capturesOnly) {
+      if (!canLand(board, color, r, c, capturesOnly)) return;
+      const target = board[r][c];
+      moves.push({ from, to: { r, c }, capture: target || null });
+    }
+
+    function generatePseudoMoves(board, color, capturesOnly = false) {
+      const moves = [];
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const piece = board[r][c];
+          if (!piece || piece.color !== color) continue;
+          const from = { r, c };
+          if (piece.type === "K") {
+            for (const [dr, dc] of DIRS) {
+              const nr = r + dr;
+              const nc = c + dc;
+              if (palace(color, nr, nc)) addStepMove(board, moves, color, from, nr, nc, capturesOnly);
+            }
+            for (const dir of [-1, 1]) {
+              let nr = r + dir;
+              while (inside(nr, c)) {
+                const target = board[nr][c];
+                if (target) {
+                  if (target.type === "K" && target.color !== color) {
+                    moves.push({ from, to: { r: nr, c }, capture: target });
+                  }
+                  break;
+                }
+                nr += dir;
+              }
+            }
+          }
+
+          if (piece.type === "A") {
+            for (const [dr, dc] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+              const nr = r + dr;
+              const nc = c + dc;
+              if (palace(color, nr, nc)) addStepMove(board, moves, color, from, nr, nc, capturesOnly);
+            }
+          }
+
+          if (piece.type === "E") {
+            for (const [dr, dc] of [[2, 2], [2, -2], [-2, 2], [-2, -2]]) {
+              const nr = r + dr;
+              const nc = c + dc;
+              const eyeR = r + dr / 2;
+              const eyeC = c + dc / 2;
+              const legalSide = color === RED ? nr >= 5 : nr <= 4;
+              if (inside(nr, nc) && legalSide && !board[eyeR][eyeC]) {
+                addStepMove(board, moves, color, from, nr, nc, capturesOnly);
+              }
+            }
+          }
+
+          if (piece.type === "H") {
+            for (const step of HORSE_STEPS) {
+              const legR = r + step.lr;
+              const legC = c + step.lc;
+              const nr = r + step.dr;
+              const nc = c + step.dc;
+              if (inside(nr, nc) && !board[legR][legC]) {
+                addStepMove(board, moves, color, from, nr, nc, capturesOnly);
+              }
+            }
+          }
+
+          if (piece.type === "R") {
+            for (const [dr, dc] of DIRS) {
+              let nr = r + dr;
+              let nc = c + dc;
+              while (inside(nr, nc)) {
+                const target = board[nr][nc];
+                if (!target) {
+                  if (!capturesOnly) moves.push({ from, to: { r: nr, c: nc }, capture: null });
+                } else {
+                  if (target.color !== color) moves.push({ from, to: { r: nr, c: nc }, capture: target });
+                  break;
+                }
+                nr += dr;
+                nc += dc;
+              }
+            }
+          }
+
+          if (piece.type === "C") {
+            for (const [dr, dc] of DIRS) {
+              let nr = r + dr;
+              let nc = c + dc;
+              let screened = false;
+              while (inside(nr, nc)) {
+                const target = board[nr][nc];
+                if (!screened) {
+                  if (!target) {
+                    if (!capturesOnly) moves.push({ from, to: { r: nr, c: nc }, capture: null });
+                  } else {
+                    screened = true;
+                  }
+                } else if (target) {
+                  if (target.color !== color) moves.push({ from, to: { r: nr, c: nc }, capture: target });
+                  break;
+                }
+                nr += dr;
+                nc += dc;
+              }
+            }
+          }
+
+          if (piece.type === "S") {
+            const dirs = [[forward(color), 0]];
+            if (crossedRiver(color, r)) {
+              dirs.push([0, 1], [0, -1]);
+            }
+            for (const [dr, dc] of dirs) {
+              addStepMove(board, moves, color, from, r + dr, c + dc, capturesOnly);
+            }
+          }
+        }
+      }
+      return moves;
+    }
+
+    function makeMove(board, move) {
+      const next = cloneBoard(board);
+      next[move.to.r][move.to.c] = next[move.from.r][move.from.c];
+      next[move.from.r][move.from.c] = null;
+      return next;
+    }
+
+    function findGeneral(board, color) {
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const piece = board[r][c];
+          if (piece && piece.color === color && piece.type === "K") return { r, c };
+        }
+      }
+      return null;
+    }
+
+    function isSquareAttacked(board, r, c, byColor) {
+      for (const [dr, dc] of DIRS) {
+        let nr = r + dr;
+        let nc = c + dc;
+        let screened = false;
+        while (inside(nr, nc)) {
+          const piece = board[nr][nc];
+          if (!piece) {
+            nr += dr;
+            nc += dc;
+            continue;
+          }
+
+          if (!screened) {
+            if (piece.color === byColor) {
+              if (piece.type === "R") return true;
+              if (piece.type === "K" && dc === 0) return true;
+            }
+            screened = true;
+          } else {
+            if (piece.color === byColor && piece.type === "C") return true;
+            break;
+          }
+          nr += dr;
+          nc += dc;
+        }
+      }
+
+      for (const step of HORSE_STEPS) {
+        const hr = r - step.dr;
+        const hc = c - step.dc;
+        const legR = hr + step.lr;
+        const legC = hc + step.lc;
+        if (inside(hr, hc) && inside(legR, legC)) {
+          const piece = board[hr][hc];
+          if (piece && piece.color === byColor && piece.type === "H" && !board[legR][legC]) return true;
+        }
+      }
+
+      for (const [dr, dc] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const ar = r - dr;
+        const ac = c - dc;
+        if (inside(ar, ac)) {
+          const piece = board[ar][ac];
+          if (piece && piece.color === byColor && piece.type === "A" && palace(byColor, r, c)) return true;
+        }
+      }
+
+      for (const [dr, dc] of [[2, 2], [2, -2], [-2, 2], [-2, -2]]) {
+        const er = r - dr;
+        const ec = c - dc;
+        const eyeR = er + dr / 2;
+        const eyeC = ec + dc / 2;
+        const legalSide = byColor === RED ? r >= 5 : r <= 4;
+        if (inside(er, ec) && inside(eyeR, eyeC) && legalSide) {
+          const piece = board[er][ec];
+          if (piece && piece.color === byColor && piece.type === "E" && !board[eyeR][eyeC]) return true;
+        }
+      }
+
+      const f = forward(byColor);
+      const sr = r - f;
+      if (inside(sr, c)) {
+        const piece = board[sr][c];
+        if (piece && piece.color === byColor && piece.type === "S") return true;
+      }
+      for (const dc of [-1, 1]) {
+        const sc = c - dc;
+        if (inside(r, sc)) {
+          const piece = board[r][sc];
+          if (piece && piece.color === byColor && piece.type === "S" && crossedRiver(byColor, r)) return true;
+        }
+      }
+
+      for (const [dr, dc] of DIRS) {
+        const kr = r - dr;
+        const kc = c - dc;
+        if (inside(kr, kc)) {
+          const piece = board[kr][kc];
+          if (piece && piece.color === byColor && piece.type === "K" && palace(byColor, kr, kc)) return true;
+        }
+      }
+
+      return false;
+    }
+
+    function isInCheck(board, color) {
+      const king = findGeneral(board, color);
+      if (!king) return true;
+      return isSquareAttacked(board, king.r, king.c, other(color));
+    }
+
+    function legalMoves(board, color, capturesOnly = false) {
+      const key = `${boardSignature(board)}|${color}|${capturesOnly ? 1 : 0}`;
+      const cached = legalMoveCache.get(key);
+      if (cached) {
+        legalMoveCache.delete(key);
+        legalMoveCache.set(key, cached);
+        return cached;
+      }
+      if (!findGeneral(board, color)) return [];
+      const pseudo = generatePseudoMoves(board, color, capturesOnly);
+      const moves = pseudo.filter((move) => !isInCheck(makeMove(board, move), color));
+      legalMoveCache.set(key, moves);
+      while (legalMoveCache.size > MAX_MOVE_CACHE) {
+        legalMoveCache.delete(legalMoveCache.keys().next().value);
+      }
+      return moves;
+    }
+
+    function boardSignature(board) {
+      let sig = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const p = board[r][c];
+          sig += p ? `${p.color[0]}${p.type}` : "..";
+        }
+      }
+      return sig;
+    }
+
+    const INITIAL_SIG = boardSignature(createInitialBoard());
+
+    function evaluateBoard(board, perspective, styleKey = "normal") {
+      const style = STYLE[styleKey] || STYLE.normal;
+      let score = 0;
+      let redMaterial = 0;
+      let blackMaterial = 0;
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const p = board[r][c];
+          if (!p) continue;
+          const sign = p.color === perspective ? 1 : -1;
+          const base = VALUE[p.type];
+          const pos = positionalValue(board, p, r, c, style);
+          score += sign * (base + pos);
+          if (p.color === RED) redMaterial += base;
+          else blackMaterial += base;
+        }
+      }
+
+      score += style.center * (centralControl(board, perspective) - centralControl(board, other(perspective)));
+      score += style.attack * (kingPressure(board, perspective) - kingPressure(board, other(perspective)));
+      score += style.defense * (kingShelter(board, perspective) - kingShelter(board, other(perspective)));
+
+      if (isInCheck(board, other(perspective))) score += 70 * style.attack;
+      if (isInCheck(board, perspective)) score -= 88 * style.defense;
+
+      const materialBalance = perspective === RED ? redMaterial - blackMaterial : blackMaterial - redMaterial;
+      if (Math.abs(materialBalance) > 550) {
+        score += materialBalance > 0 ? 35 : -35;
+      }
+
+      return score;
+    }
+
+    function positionalValue(board, p, r, c, style) {
+      const center = 4 - Math.abs(4 - c);
+      const progress = p.color === RED ? 9 - r : r;
+      let v = center * 3;
+      if (p.type === "S") {
+        v += progress * 11;
+        if (crossedRiver(p.color, r)) v += 54 + center * 8;
+      }
+      if (p.type === "H") {
+        v += center * 10 + progress * 4;
+        if ((p.color === RED && r <= 5) || (p.color === BLACK && r >= 4)) v += 18 * style.attack;
+      }
+      if (p.type === "C") {
+        v += center * 9;
+        if (c === 4) v += 24 * style.attack;
+        v += cannonScreens(board, r, c) * 7;
+      }
+      if (p.type === "R") {
+        v += rookOpenLines(board, r, c) * 12 + center * 4;
+      }
+      if (p.type === "A" || p.type === "E") {
+        v += 12 * style.defense;
+      }
+      if (p.type === "K") {
+        v += kingShelter(board, p.color) * 0.35;
+      }
+      return v;
+    }
+
+    function rookOpenLines(board, r, c) {
+      let open = 0;
+      for (const [dr, dc] of DIRS) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (inside(nr, nc) && !board[nr][nc]) open++;
+      }
+      return open;
+    }
+
+    function cannonScreens(board, r, c) {
+      let screens = 0;
+      for (const [dr, dc] of DIRS) {
+        let nr = r + dr;
+        let nc = c + dc;
+        while (inside(nr, nc)) {
+          if (board[nr][nc]) {
+            screens++;
+            break;
+          }
+          nr += dr;
+          nc += dc;
+        }
+      }
+      return screens;
+    }
+
+    function centralControl(board, color) {
+      let score = 0;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 3; c <= 5; c++) {
+          const p = board[r][c];
+          if (p && p.color === color) score += p.type === "S" ? 18 : 10;
+        }
+      }
+      return score;
+    }
+
+    function kingPressure(board, color) {
+      const enemy = findGeneral(board, other(color));
+      if (!enemy) return 10000;
+      let score = 0;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const p = board[r][c];
+          if (!p || p.color !== color) continue;
+          const dist = Math.abs(r - enemy.r) + Math.abs(c - enemy.c);
+          if (p.type === "R" || p.type === "C" || p.type === "H") score += Math.max(0, 56 - dist * 6);
+          if (p.type === "S" && crossedRiver(color, r)) score += Math.max(0, 42 - dist * 5);
+        }
+      }
+      return score;
+    }
+
+    function kingShelter(board, color) {
+      const king = findGeneral(board, color);
+      if (!king) return -10000;
+      let score = 0;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 3; c <= 5; c++) {
+          const p = board[r][c];
+          if (!p || p.color !== color) continue;
+          if (palace(color, r, c)) {
+            if (p.type === "A") score += 48;
+            if (p.type === "K") score += 20;
+          }
+          if ((color === RED && r >= 5) || (color === BLACK && r <= 4)) {
+            if (p.type === "E") score += 26;
+            if (p.type === "S") score += 14;
+          }
+        }
+      }
+      for (const [dr, dc] of DIRS) {
+        const rr = king.r + dr;
+        const cc = king.c + dc;
+        if (inside(rr, cc)) {
+          const p = board[rr][cc];
+          if (p && p.color === color) score += 12;
+        }
+      }
+      return score;
+    }
+
+    function moveKey(move) {
+      return `${move.from.r}${move.from.c}${move.to.r}${move.to.c}`;
+    }
+
+    function searchKey(board, color, styleKey) {
+      return `${color}|${styleKey}|${boardSignature(board)}`;
+    }
+
+    function createSearchContext(styleKey, deadline) {
+      return {
+        styleKey,
+        deadline,
+        tt: new Map(),
+        evalCache: new Map(),
+        history: new Map(),
+        killers: [],
+        nodes: 0,
+        qNodes: 0,
+        ttHits: 0,
+        evalHits: 0,
+        cutoffs: 0,
+        timeChecks: 0,
+        maxEntries: MAX_TRANSPOSITION
+      };
+    }
+
+    function checkSearchTime(ctx) {
+      ctx.timeChecks++;
+      if ((ctx.timeChecks & 511) === 0 && performance.now() > ctx.deadline) throw new Error("timeout");
+    }
+
+    function evaluateCached(board, perspective, styleKey, ctx) {
+      if (!ctx) return evaluateBoard(board, perspective, styleKey);
+      const key = `${perspective}|${styleKey}|${boardSignature(board)}`;
+      const cached = ctx.evalCache.get(key);
+      if (cached !== undefined) {
+        ctx.evalHits++;
+        return cached;
+      }
+      const score = evaluateBoard(board, perspective, styleKey);
+      if (ctx.evalCache.size < ctx.maxEntries) ctx.evalCache.set(key, score);
+      return score;
+    }
+
+    function readEngineCache(cache, key) {
+      if (!cache.has(key)) return null;
+      const value = cache.get(key);
+      cache.delete(key);
+      cache.set(key, value);
+      return value;
+    }
+
+    function writeEngineCache(cache, key, value, maxSize) {
+      cache.set(key, value);
+      while (cache.size > maxSize) {
+        cache.delete(cache.keys().next().value);
+      }
+      return value;
+    }
+
+    function clearEngineCaches() {
+      engineResultCache.clear();
+      coachHintCache.clear();
+      legalMoveCache.clear();
+    }
+
+    function moveOrderingScore(board, move, color, styleKey, ttMove = null, history = null, killers = null, ply = 0) {
+      const style = STYLE[styleKey] || STYLE.normal;
+      const moving = board[move.from.r][move.from.c];
+      let score = 0;
+      if (ttMove && movesEqual(move, ttMove)) score += 1000000;
+      if (killers && killers[ply] && killers[ply].some((killer) => movesEqual(move, killer))) score += 90000;
+      if (history) score += history.get(`${color}:${moveKey(move)}`) || 0;
+      if (move.capture) score += VALUE[move.capture.type] * 10 - VALUE[moving.type];
+      const next = makeMove(board, move);
+      if (isInCheck(next, other(color))) score += 620;
+      if (moving.type === "C" && move.to.c === 4) score += style.attack * 36;
+      if (moving.type === "S" && crossedRiver(color, move.to.r)) score += 42;
+      score += 4 - Math.abs(4 - move.to.c);
+      if (style.surprise) {
+        if (moving.type === "H" || moving.type === "C") score += 18 * style.surprise;
+        if (!move.capture && !isInCheck(next, other(color))) score += rookOpenLines(next, move.to.r, move.to.c) * 5 * style.surprise;
+      }
+      return score;
+    }
+
+    function orderedMoves(board, color, styleKey, capturesOnly = false, ttMove = null, ctx = null, ply = 0) {
+      return legalMoves(board, color, capturesOnly)
+        .map((move) => ({
+          move,
+          score: moveOrderingScore(board, move, color, styleKey, ttMove, ctx ? ctx.history : null, ctx ? ctx.killers : null, ply)
+        }))
+        .sort((a, b) => b.score - a.score)
+        .map((item) => item.move);
+    }
+
+    function searchBestMove(board, color, depthLimit, timeLimit, styleKey, useBook = false) {
+      const signature = boardSignature(board);
+      if (useBook) {
+        const book = findBookMove(board, color, styleKey);
+        if (book) {
+          return { move: book, score: evaluateBoard(makeMove(board, book), color, styleKey), depth: 0, book: true };
+        }
+      }
+
+      const cacheKey = `${signature}|${color}|${styleKey}|${depthLimit}|${Math.round(timeLimit / 250)}|${useBook ? 1 : 0}`;
+      const cached = readEngineCache(engineResultCache, cacheKey);
+      if (cached) {
+        return { ...cached, cached: true, elapsed: 0 };
+      }
+
+      const deadline = performance.now() + timeLimit;
+      const ctx = createSearchContext(styleKey, deadline);
+      let bestMove = null;
+      let bestScore = -INF;
+      let completedDepth = 0;
+      let timedOut = false;
+      let stoppedEarly = false;
+      let rootScores = [];
+      const startedAt = performance.now();
+
+      for (let depth = 1; depth <= depthLimit; depth++) {
+        try {
+          if (performance.now() > deadline) throw new Error("timeout");
+          const depthStartedAt = performance.now();
+          let localBest = null;
+          let localScore = -INF;
+          const localRootScores = [];
+          let alpha = -INF;
+          const moves = orderedMoves(board, color, styleKey, false, bestMove, ctx, 0);
+          for (const move of moves) {
+            const score = -negamax(makeMove(board, move), other(color), depth - 1, -INF, -alpha, styleKey, 1, ctx);
+            localRootScores.push({ move, score });
+            if (score > localScore) {
+              localScore = score;
+              localBest = move;
+            }
+            alpha = Math.max(alpha, score);
+          }
+          if (localBest) {
+            bestMove = localBest;
+            bestScore = localScore;
+            completedDepth = depth;
+            rootScores = localRootScores.sort((a, b) => b.score - a.score).slice(0, 8);
+          }
+          const depthElapsed = performance.now() - depthStartedAt;
+          const remaining = deadline - performance.now();
+          if (depth < depthLimit && remaining < Math.max(220, depthElapsed * 4)) {
+            stoppedEarly = true;
+            break;
+          }
+        } catch (err) {
+          timedOut = true;
+          break;
+        }
+      }
+
+      if (!bestMove) {
+        const moves = orderedMoves(board, color, styleKey, false, null, ctx, 0);
+        bestMove = moves[0] || null;
+        bestScore = bestMove ? evaluateCached(makeMove(board, bestMove), color, styleKey, ctx) : -MATE;
+      }
+
+      const result = {
+        move: bestMove,
+        score: bestScore,
+        depth: completedDepth,
+        book: false,
+        nodes: ctx.nodes,
+        qNodes: ctx.qNodes,
+        ttHits: ctx.ttHits,
+        evalHits: ctx.evalHits,
+        cutoffs: ctx.cutoffs,
+        elapsed: Math.round(performance.now() - startedAt),
+        timedOut,
+        stoppedEarly,
+        candidates: rootScores
+      };
+      return writeEngineCache(engineResultCache, cacheKey, result, MAX_ENGINE_CACHE);
+    }
+
+    function chooseAiMove(board, color, difficultyKey, styleKey) {
+      const cfg = DIFFICULTY[difficultyKey] || DIFFICULTY.emperor;
+      return searchBestMove(board, color, cfg.depth, cfg.time, styleKey, true);
+    }
+
+    function addCandidate(candidateMap, board, color, move, source, styleKey, score = null) {
+      if (!move) return;
+      const key = moveKey(move);
+      const existing = candidateMap.get(key);
+      const candidateScore = score === null ? evaluateBoard(makeMove(board, move), color, styleKey) : score;
+      if (!existing || candidateScore > existing.score) {
+        candidateMap.set(key, { move, source, styleKey, score: candidateScore });
+      }
+    }
+
+    function mergeSearchStats(target, result) {
+      if (!result) return target;
+      target.nodes += result.nodes || 0;
+      target.qNodes += result.qNodes || 0;
+      target.ttHits += result.ttHits || 0;
+      target.evalHits += result.evalHits || 0;
+      target.cutoffs += result.cutoffs || 0;
+      target.elapsed += result.elapsed || 0;
+      target.depth = Math.max(target.depth, result.depth || 0);
+      return target;
+    }
+
+    function uniqueStyleKeys(styles) {
+      return Array.from(new Set(styles.filter((style) => STYLE[style])));
+    }
+
+    function coachBlendStyles(coach) {
+      return uniqueStyleKeys(coach.level.styles || [coach.styleKey]);
+    }
+
+    function average(values) {
+      return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    }
+
+    function coachCandidateScore(board, color, move, coach, styleKeys, replyMove = null) {
+      const afterBoard = makeMove(board, move);
+      const boardToScore = replyMove ? makeMove(afterBoard, replyMove) : afterBoard;
+      const scores = styleKeys.map((style) => evaluateBoard(boardToScore, color, style));
+      const minScore = Math.min(...scores);
+      const avgScore = average(scores);
+      const moving = board[move.from.r][move.from.c];
+      const movedValue = moving ? VALUE[moving.type] : 0;
+      let bonus = 0;
+      if (move.capture) bonus += VALUE[move.capture.type] * 0.38;
+      const givesCheck = isInCheck(afterBoard, other(color));
+      if (givesCheck) bonus += 520;
+      bonus += (kingPressure(afterBoard, color) - kingPressure(board, color)) * 1.4;
+      bonus += (kingShelter(afterBoard, color) - kingShelter(board, color)) * 0.9;
+      bonus += (centralControl(afterBoard, color) - centralControl(board, color)) * 1.1;
+      if (moving && (moving.type === "R" || moving.type === "C" || moving.type === "H")) bonus += 18;
+      if (moving && moving.type !== "K") {
+        const attacked = isSquareAttacked(afterBoard, move.to.r, move.to.c, other(color));
+        const defended = isSquareAttacked(afterBoard, move.to.r, move.to.c, color);
+        if (attacked && !givesCheck) bonus -= movedValue * (defended ? 0.14 : 0.28);
+        if (replyMove && replyMove.to.r === move.to.r && replyMove.to.c === move.to.c) {
+          bonus -= movedValue * (move.capture ? 0.32 : 0.48);
+        }
+      }
+      return avgScore * 0.54 + minScore * 0.46 + bonus;
+    }
+
+    function chooseCoachMove(board, color, coach) {
+      const blendStyles = coachBlendStyles(coach);
+      const stats = { nodes: 0, qNodes: 0, ttHits: 0, evalHits: 0, cutoffs: 0, elapsed: 0, depth: 0 };
+
+      if (!coach.level.ensemble) {
+        const result = searchBestMove(board, color, coach.level.depth, coach.level.time, coach.styleKey, true);
+        mergeSearchStats(stats, result);
+        return { ...result, blendStyles, selectedSource: coach.style.label, stats };
+      }
+
+      const candidateMap = new Map();
+      const book = findBookMove(board, color, coach.styleKey);
+      addCandidate(candidateMap, board, color, book, "opening book", coach.styleKey);
+      if (book) {
+        return {
+          move: book,
+          reply: null,
+          score: evaluateBoard(makeMove(board, book), color, coach.styleKey),
+          depth: 0,
+          book: true,
+          nodes: 0,
+          qNodes: 0,
+          ttHits: 0,
+          evalHits: 0,
+          cutoffs: 0,
+          elapsed: 0,
+          candidates: [{ move: book, source: "opening book", styleKey: coach.styleKey }],
+          blendStyles,
+          selectedSource: "opening book",
+          ensemble: true
+        };
+      }
+
+      const primaryTime = Math.max(900, Math.floor(coach.level.time * 0.48));
+      const primary = searchBestMove(board, color, coach.level.depth, primaryTime, coach.styleKey, false);
+      mergeSearchStats(stats, primary);
+      addCandidate(candidateMap, board, color, primary.move, coach.style.label, coach.styleKey, primary.score);
+      (primary.candidates || []).slice(0, 4).forEach((item) => {
+        addCandidate(candidateMap, board, color, item.move, coach.style.label, coach.styleKey, item.score);
+      });
+
+      const probeStyles = blendStyles.filter((style) => style !== coach.styleKey).slice(0, coach.level.probes);
+      const probeDepth = Math.max(4, coach.level.depth - 2);
+      const probeTime = Math.max(380, Math.min(920, Math.floor(coach.level.time * 0.11)));
+      for (const style of probeStyles) {
+        const probe = searchBestMove(board, color, probeDepth, probeTime, style, false);
+        mergeSearchStats(stats, probe);
+        addCandidate(candidateMap, board, color, probe.move, STYLE[style].label, style, probe.score);
+        (probe.candidates || []).slice(0, 2).forEach((item) => {
+          addCandidate(candidateMap, board, color, item.move, STYLE[style].label, style, item.score);
+        });
+      }
+
+      orderedMoves(board, color, coach.styleKey).slice(0, 5).forEach((move) => {
+        addCandidate(candidateMap, board, color, move, "tactical ordering", coach.styleKey);
+      });
+
+      let ranked = Array.from(candidateMap.values())
+        .map((candidate) => ({
+          ...candidate,
+          blendedScore: coachCandidateScore(board, color, candidate.move, coach, blendStyles)
+        }))
+        .sort((a, b) => b.blendedScore - a.blendedScore)
+        .slice(0, Math.max(3, Math.min(5, coach.level.level - 5)));
+
+      const replyTime = Math.max(240, Math.floor(coach.level.replyTime / Math.max(1, ranked.length)));
+      ranked = ranked.map((candidate) => {
+        const afterBoard = makeMove(board, candidate.move);
+        const reply = searchBestMove(afterBoard, other(color), coach.level.replyDepth, replyTime, coach.styleKey, false);
+        mergeSearchStats(stats, reply);
+        const replyScore = reply.move
+          ? coachCandidateScore(board, color, candidate.move, coach, blendStyles, reply.move)
+          : candidate.blendedScore + 250;
+        return {
+          ...candidate,
+          reply: reply.move,
+          replyScore,
+          replyDepth: reply.depth || 0
+        };
+      }).sort((a, b) => b.replyScore - a.replyScore);
+
+      const best = ranked[0];
+      if (!best) {
+        return { ...primary, blendStyles, selectedSource: coach.style.label, stats };
+      }
+
+      return {
+        move: best.move,
+        reply: best.reply,
+        score: best.replyScore,
+        depth: stats.depth,
+        book: best.source === "opening book",
+        nodes: stats.nodes,
+        qNodes: stats.qNodes,
+        ttHits: stats.ttHits,
+        evalHits: stats.evalHits,
+        cutoffs: stats.cutoffs,
+        elapsed: stats.elapsed,
+        candidates: ranked,
+        blendStyles,
+        selectedSource: best.source,
+        ensemble: true
+      };
+    }
+
+    function getCoachProfile(levelKey) {
+      const selectedLevel = String(levelKey || state.coachLevel || "2");
+      const level = COACH_LEVEL[selectedLevel] || COACH_LEVEL["2"];
+      const styles = uniqueStyleKeys(level.styles || ["normal"]);
+      const primary = STYLE[level.primary] ? level.primary : styles[0] || "normal";
+      const strategy = {
+        label: level.modeLabel,
+        primary,
+        styles,
+        goal: level.goal
+      };
+      return {
+        levelKey: COACH_LEVEL[selectedLevel] ? selectedLevel : "2",
+        focusKey: `level-${COACH_LEVEL[selectedLevel] ? selectedLevel : "2"}`,
+        styleKey: primary,
+        level,
+        style: strategy
+      };
+    }
+
+    function selectedCoachProfile() {
+      return getCoachProfile(els.coachLevelSelect ? els.coachLevelSelect.value : state.coachLevel);
+    }
+
+    function chooseCoachHint(board, color, levelKey) {
+      const coach = getCoachProfile(levelKey);
+      const styleKeySafe = coach.styleKey;
+      const signature = boardSignature(board);
+      const cacheKey = `${signature}|${color}|${coach.levelKey}|${coach.focusKey}`;
+      const cached = readEngineCache(coachHintCache, cacheKey);
+      if (cached) {
+        return { ...cached, cached: true };
+      }
+      const before = evaluateBoard(board, color, styleKeySafe);
+      const result = chooseCoachMove(board, color, coach);
+      if (!result.move) {
+        return writeEngineCache(coachHintCache, cacheKey, {
+          move: null,
+          lines: ["No legal coach move is available."],
+          status: "No legal coach move is available.",
+          side: color,
+          signature
+        }, MAX_COACH_CACHE);
+      }
+
+      const afterBoard = makeMove(board, result.move);
+      const after = evaluateBoard(afterBoard, color, styleKeySafe);
+      const swing = (after - before) / 100;
+      const replyMove = result.reply || null;
+      const plan = describeCoachPlan(board, result.move, coach, swing, replyMove, result);
+      const status = `Coach recommends ${moveText(board, result.move)}.`;
+      return writeEngineCache(coachHintCache, cacheKey, {
+        move: result.move,
+        reply: replyMove,
+        depth: result.depth,
+        book: result.book,
+        levelKey: coach.levelKey,
+        level: coach.level,
+        focusKey: coach.focusKey,
+        styleKey: styleKeySafe,
+        style: coach.style,
+        ensemble: result.ensemble,
+        selectedSource: result.selectedSource,
+        swing,
+        lines: plan,
+        status,
+        side: color,
+        signature
+      }, MAX_COACH_CACHE);
+    }
+
+    function describeCoachPlan(board, move, coach, swing, replyMove, result) {
+      const styleKey = coach.styleKey;
+      const moving = board[move.from.r][move.from.c];
+      const afterBoard = makeMove(board, move);
+      const givesCheck = isInCheck(afterBoard, other(moving.color));
+      const captureText = move.capture ? `It wins ${GLYPH[move.capture.color][move.capture.type]} and keeps tempo.` : "It improves the position without giving the opponent a free target.";
+      const centerGain = Math.abs(move.to.c - 4) < Math.abs(move.from.c - 4);
+      const pressureGain = kingPressure(afterBoard, moving.color) - kingPressure(board, moving.color);
+      const shelterGain = kingShelter(afterBoard, moving.color) - kingShelter(board, moving.color);
+      const reason = givesCheck
+        ? "It gives check, so the opponent must answer your move first."
+        : pressureGain > 20
+          ? "It moves attacking force closer to the enemy general."
+          : shelterGain > 14
+            ? "It makes your king safer before you continue the fight."
+            : centerGain
+              ? "It takes a stronger central square and increases board control."
+              : captureText;
+      const replyText = replyMove
+        ? `Expect ${moveText(afterBoard, replyMove)} as the main reply.`
+        : result.book
+          ? "Opening lesson: develop the next active horse or rook before launching a one-piece attack."
+          : "If the opponent has no good reply, keep forcing checks and captures.";
+      const swingText = `${swing >= 0 ? "+" : ""}${swing.toFixed(2)}`;
+      const searchedText = result.nodes
+        ? ` across ${((result.nodes || 0) + (result.qNodes || 0)).toLocaleString()} positions with ${result.ttHits || 0} cache hits`
+        : "";
+      const engineText = result.ensemble
+        ? `${coach.level.label} (${(result.blendStyles || [styleKey]).map((key) => STYLE[key].label).join(", ")})`
+        : coach.level.label;
+      const sourceText = result.book
+        ? "selected from the opening book and checked by coach evaluation"
+        : `recommended by ${engineText} from a depth ${Math.max(1, result.depth)} search${searchedText}`;
+      return [
+        `<span class="success-text">${engineText}:</span> ${moveText(board, move)} is ${sourceText}.`,
+        `Why: ${reason}`,
+        `Plan: ${coach.style.goal}. Evaluation change: ${swingText}.`,
+        replyText,
+        `To beat the opponent: after this move, keep asking what file opens next, which defender is overloaded, and whether your king is safe enough to attack.`
+      ];
+    }
+
+    function describeMovePurpose(beforeBoard, afterBoard, move, moverColor, styleKey) {
+      const givesCheck = isInCheck(afterBoard, other(moverColor));
+      const pressureGain = kingPressure(afterBoard, moverColor) - kingPressure(beforeBoard, moverColor);
+      const shelterGain = kingShelter(afterBoard, moverColor) - kingShelter(beforeBoard, moverColor);
+      const centerGain = centralControl(afterBoard, moverColor) - centralControl(beforeBoard, moverColor);
+      const moving = beforeBoard[move.from.r][move.from.c];
+      if (move.capture) return `it wins ${GLYPH[move.capture.color][move.capture.type]} and changes the material balance.`;
+      if (givesCheck) return "it creates a direct check, forcing the next reply.";
+      if (pressureGain > 24) return "it increases pressure around the general and prepares a forcing attack.";
+      if (shelterGain > 16) return "it improves king safety before continuing the fight.";
+      if (centerGain > 16) return "it fights for central files and makes later attacks easier.";
+      if (moving && moving.type === "C" && move.to.c === 4) return "it puts a cannon on the central file, a classic attacking signal.";
+      if (moving && moving.type === "H") return "it improves horse activity and looks for forks or palace pressure.";
+      if (moving && moving.type === "R") return "it opens a rook line and prepares file pressure.";
+      if (moving && moving.type === "S" && crossedRiver(moverColor, move.to.r)) return "it advances a crossed soldier, creating long-term space and king pressure.";
+      return `it supports a ${STYLE[styleKey].label.toLowerCase()} structure and improves piece activity.`;
+    }
+
+    function tacticalMoveScore(board, color, move, styleKey) {
+      const afterBoard = makeMove(board, move);
+      const moving = board[move.from.r][move.from.c];
+      let score = evaluateBoard(afterBoard, color, styleKey);
+      score += moveOrderingScore(board, move, color, styleKey) * 0.45;
+      if (move.capture) score += VALUE[move.capture.type] * 0.55;
+      if (isInCheck(afterBoard, other(color))) score += 820;
+      score += (kingPressure(afterBoard, color) - kingPressure(board, color)) * 2.7;
+      score += (centralControl(afterBoard, color) - centralControl(board, color)) * 1.4;
+      if (moving && (moving.type === "R" || moving.type === "C" || moving.type === "H")) score += 45;
+      return score;
+    }
+
+    function collectThreats(board, color, styleKey, maxCount = 4) {
+      const scored = legalMoves(board, color)
+        .map((move) => {
+          const afterBoard = makeMove(board, move);
+          const givesCheck = isInCheck(afterBoard, other(color));
+          const pressureGain = kingPressure(afterBoard, color) - kingPressure(board, color);
+          const forcing = givesCheck || !!move.capture || pressureGain > 18;
+          return {
+            move,
+            forcing,
+            score: tacticalMoveScore(board, color, move, styleKey),
+            reason: describeMovePurpose(board, afterBoard, move, color, styleKey)
+          };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      const forcingThreats = scored.filter((item) => item.forcing).slice(0, maxCount);
+      return (forcingThreats.length ? forcingThreats : scored.slice(0, Math.min(maxCount, 3)));
+    }
+
+    function coachSide() {
+      return state.aiEnabled ? state.playerColor : state.sideToMove;
+    }
+
+    function isCoachTurn() {
+      return !state.aiEnabled || state.sideToMove === state.playerColor;
+    }
+
+    function requireCoachUnlocked() {
+      if (state.coachUnlocked) return true;
+      flashStatus("Private coach is locked.");
+      return false;
+    }
+
+    function analyzeOpponentIntent() {
+      if (!requireCoachUnlocked()) return;
+      if (state.gameOver || state.aiThinking || state.coachThinking) return;
+      playSound("analyze");
+      state.coachThinking = true;
+      state.notice = "Reading the opponent's intention.";
+      state.hintMove = null;
+      state.analysisView = null;
+      state.selected = null;
+      state.selectedMoves = [];
+      render();
+
+      setTimeout(() => {
+        const signature = boardSignature(state.board);
+        const opponent = other(state.sideToMove);
+        const styleKey = els.styleSelect.value;
+        const lastEntry = state.history[state.history.length - 1];
+        const lastMove = state.lastMove;
+        const beforeLast = lastEntry ? lastEntry.board : null;
+        const movedPiece = beforeLast && lastMove ? beforeLast[lastMove.from.r][lastMove.from.c] : null;
+        const lastWasOpponent = movedPiece && movedPiece.color === opponent;
+        const threats = collectThreats(state.board, opponent, styleKey, 4);
+        const coach = selectedCoachProfile();
+        const answer = searchBestMove(
+          state.board,
+          state.sideToMove,
+          Math.min(6, coach.level.depth),
+          Math.min(2600, coach.level.time),
+          coach.styleKey,
+          false
+        );
+
+        const lines = [];
+        if (lastWasOpponent) {
+          const purpose = describeMovePurpose(beforeLast, state.board, lastMove, opponent, styleKey);
+          lines.push(`<span class="danger-text">Opponent intention:</span> ${moveText(beforeLast, lastMove)} because ${purpose}`);
+        } else {
+          lines.push(`<span class="danger-text">Opponent intention:</span> there is no fresh opponent move to decode, so this reads their strongest current threat.`);
+        }
+
+        if (threats.length) {
+          threats.forEach((item, index) => {
+            lines.push(`Threat ${index + 1}: ${moveText(state.board, item.move)} because ${item.reason}`);
+          });
+        }
+
+        if (answer.move) {
+          lines.push(`Your practical answer: ${moveText(state.board, answer.move)}. It contests the plan before it becomes a direct attack.`);
+        }
+
+        lines.push("Field read: identify their target square, then decide whether to block, trade the attacker, or counterattack faster.");
+
+        state.coachThinking = false;
+        state.coachAdvice = { lines, signature, side: state.sideToMove };
+        state.analysisView = {
+          type: "opponent",
+          signature,
+          side: state.sideToMove,
+          anchor: lastWasOpponent ? lastMove.to : null,
+          move: threats[0] ? threats[0].move : null,
+          threats
+        };
+        flashStatus("Opponent plan visualized.", lines.join(" "));
+        render();
+      }, 60);
+    }
+
+    function toggleOurPlan() {
+      if (!requireCoachUnlocked()) return;
+      if (state.gameOver) return;
+      state.autoOurPlan = !state.autoOurPlan;
+      saveBooleanSetting("xiangqi-pro-auto-our-plan", state.autoOurPlan);
+      if (!state.autoOurPlan) {
+        ourPlanRequestId++;
+        clearTimeout(autoPlanTimer);
+        if (activeOurPlanRequestId) {
+          state.coachThinking = false;
+          activeOurPlanRequestId = 0;
+        }
+        state.notice = null;
+        if (state.analysisView && state.analysisView.type === "ours") {
+          state.analysisView = null;
+          state.coachAdvice = null;
+          state.selected = null;
+          state.selectedMoves = [];
+        }
+        flashStatus("Auto Our Plan turned off.");
+        render();
+        return;
+      }
+
+      if (state.coachThinking) {
+        render();
+        scheduleAutoOurPlan(360);
+        return;
+      }
+      render();
+      calculateOurPlan({ auto: false });
+    }
+
+    function calculateOurPlan(options = {}) {
+      if (!state.coachUnlocked) return;
+      if (state.gameOver || state.aiThinking || state.coachThinking) return;
+      if (!isCoachTurn()) {
+        if (!options.auto) flashStatus("Wait for your turn, then ask the coach for the best move.");
+        return;
+      }
+      if (!options.auto) playSound("analyze");
+      state.coachThinking = true;
+      state.notice = options.auto ? "Auto coach is updating your best move." : "Calculating our next plan.";
+      state.hintMove = null;
+      state.analysisView = null;
+      const requestId = ++ourPlanRequestId;
+      activeOurPlanRequestId = requestId;
+      const startSignature = boardSignature(state.board);
+      const startSide = state.sideToMove;
+      render();
+
+      setTimeout(() => {
+        if (requestId !== ourPlanRequestId ||
+            startSignature !== boardSignature(state.board) ||
+            startSide !== state.sideToMove ||
+            (options.auto && !state.autoOurPlan)) {
+          if (activeOurPlanRequestId === requestId) {
+            state.coachThinking = false;
+            activeOurPlanRequestId = 0;
+            render();
+          }
+          return;
+        }
+        const signature = boardSignature(state.board);
+        const coach = selectedCoachProfile();
+        const side = coachSide();
+        const advice = chooseCoachHint(state.board, side, coach.levelKey);
+        const lines = advice.move
+          ? (() => {
+              const engineName = advice.ensemble ? `${advice.level.label} blended` : advice.level.label;
+              return [
+                `<span class="success-text">Best ${engineName} move for ${side === RED ? "Red" : "Black"}:</span> ${moveText(state.board, advice.move)}.`,
+                ...advice.lines.slice(1)
+              ];
+            })()
+          : advice.lines;
+
+        if (requestId !== ourPlanRequestId ||
+            signature !== boardSignature(state.board) ||
+            startSide !== state.sideToMove ||
+            (options.auto && !state.autoOurPlan)) {
+          if (activeOurPlanRequestId === requestId) {
+            state.coachThinking = false;
+            activeOurPlanRequestId = 0;
+            render();
+          }
+          return;
+        }
+        state.coachThinking = false;
+        activeOurPlanRequestId = 0;
+        state.coachAdvice = { ...advice, lines, signature, side: state.sideToMove };
+        state.analysisView = {
+          type: "ours",
+          signature,
+          side: state.sideToMove,
+          move: advice.move || null
+        };
+        if (advice.move) {
+          state.selected = { ...advice.move.from };
+          state.selectedMoves = [advice.move];
+        }
+        flashStatus(advice.move ? (options.auto ? "Auto plan updated." : "Our plan visualized.") : advice.status, lines.join(" "));
+        render();
+      }, 60);
+    }
+
+    function scheduleAutoOurPlan(delay = 260) {
+      clearTimeout(autoPlanTimer);
+      if (!state.coachUnlocked) return;
+      if (!state.autoOurPlan || state.training || state.gameOver) return;
+      autoPlanTimer = setTimeout(() => {
+        if (!state.autoOurPlan || state.training || state.gameOver || state.aiThinking || state.coachThinking) return;
+        if (!isCoachTurn()) return;
+        calculateOurPlan({ auto: true });
+      }, delay);
+    }
+
+    function negamax(board, color, depth, alpha, beta, styleKey, ply, ctx) {
+      ctx.nodes++;
+      checkSearchTime(ctx);
+
+      const alphaOriginal = alpha;
+      const betaOriginal = beta;
+      const key = searchKey(board, color, styleKey);
+      const cached = ctx.tt.get(key);
+      if (cached && cached.depth >= depth) {
+        ctx.ttHits++;
+        if (cached.flag === TT_EXACT) return cached.score;
+        if (cached.flag === TT_LOWER) alpha = Math.max(alpha, cached.score);
+        else if (cached.flag === TT_UPPER) beta = Math.min(beta, cached.score);
+        if (alpha >= beta) return cached.score;
+      }
+
+      const inCheck = isInCheck(board, color);
+      if (depth <= 0 && !inCheck) {
+        return quiescence(board, color, alpha, beta, styleKey, 0, ctx);
+      }
+
+      const moves = orderedMoves(board, color, styleKey, false, cached ? cached.move : null, ctx, ply);
+      if (!moves.length) {
+        return inCheck ? -MATE + ply : -MATE / 2 + ply;
+      }
+
+      let best = -INF;
+      let bestMove = null;
+      const childDepth = Math.max(0, depth - 1);
+      for (let index = 0; index < moves.length; index++) {
+        const move = moves[index];
+        const next = makeMove(board, move);
+        const quiet = !move.capture && !isInCheck(next, other(color));
+        const reducedDepth = depth >= 3 && index > 5 && quiet && !inCheck
+          ? Math.max(0, childDepth - 1)
+          : childDepth;
+        let score;
+        if (index === 0) {
+          score = -negamax(next, other(color), reducedDepth, -beta, -alpha, styleKey, ply + 1, ctx);
+        } else {
+          score = -negamax(next, other(color), reducedDepth, -alpha - 1, -alpha, styleKey, ply + 1, ctx);
+          if (score > alpha && reducedDepth < childDepth) {
+            score = -negamax(next, other(color), childDepth, -alpha - 1, -alpha, styleKey, ply + 1, ctx);
+          }
+          if (score > alpha && score < beta) {
+            score = -negamax(next, other(color), childDepth, -beta, -alpha, styleKey, ply + 1, ctx);
+          }
+        }
+        if (score > best) {
+          best = score;
+          bestMove = move;
+        }
+        alpha = Math.max(alpha, score);
+        if (alpha >= beta) {
+          ctx.cutoffs++;
+          if (!move.capture) {
+            const killers = ctx.killers[ply] || (ctx.killers[ply] = []);
+            if (!killers.some((killer) => movesEqual(killer, move))) {
+              killers.unshift(move);
+              if (killers.length > 2) killers.pop();
+            }
+            const keyMove = `${color}:${moveKey(move)}`;
+            ctx.history.set(keyMove, Math.min(200000, (ctx.history.get(keyMove) || 0) + depth * depth));
+          }
+          break;
+        }
+      }
+      const flag = best <= alphaOriginal
+        ? TT_UPPER
+        : best >= betaOriginal
+          ? TT_LOWER
+          : TT_EXACT;
+      if (ctx.tt.size < ctx.maxEntries) {
+        ctx.tt.set(key, { depth, score: best, flag, move: bestMove });
+      }
+      return best;
+    }
+
+    function quiescence(board, color, alpha, beta, styleKey, qDepth, ctx) {
+      ctx.qNodes++;
+      checkSearchTime(ctx);
+      const stand = evaluateCached(board, color, styleKey, ctx);
+      if (stand >= beta) return beta;
+      alpha = Math.max(alpha, stand);
+      if (qDepth >= 4) return alpha;
+
+      const captures = orderedMoves(board, color, styleKey, true, null, ctx, qDepth);
+      for (const move of captures) {
+        const score = -quiescence(makeMove(board, move), other(color), -beta, -alpha, styleKey, qDepth + 1, ctx);
+        if (score >= beta) return beta;
+        alpha = Math.max(alpha, score);
+      }
+      return alpha;
+    }
+
+    function sameMove(move, target) {
+      return move.from.r === target.from[0] &&
+        move.from.c === target.from[1] &&
+        move.to.r === target.to[0] &&
+        move.to.c === target.to[1];
+    }
+
+    function movesEqual(a, b) {
+      return a.from.r === b.from.r &&
+        a.from.c === b.from.c &&
+        a.to.r === b.to.r &&
+        a.to.c === b.to.c;
+    }
+
+    function findBookMove(board, color, styleKey) {
+      const sig = boardSignature(board);
+      if (sig === INITIAL_SIG && color === RED) {
+        const book = styleKey === "fortress" || styleKey === "defensive"
+          ? BOOK[1]
+          : styleKey === "balanced" || styleKey === "normal"
+            ? BOOK[2]
+            : styleKey === "unique"
+              ? BOOK[2]
+              : BOOK[0];
+        return targetToMove(board, book.move, color);
+      }
+
+      const initialSigAfter = (from, to) => {
+        const next = createInitialBoard();
+        next[to[0]][to[1]] = next[from[0]][from[1]];
+        next[from[0]][from[1]] = null;
+        return boardSignature(next);
+      };
+      if (color === BLACK) {
+        if (sig === initialSigAfter([9, 1], [7, 2])) {
+          return targetToMove(board, { from: [2, 1], to: [2, 4] }, color);
+        }
+        if (sig === initialSigAfter([9, 7], [7, 6])) {
+          return targetToMove(board, { from: [2, 7], to: [2, 4] }, color);
+        }
+        if (sig === initialSigAfter([6, 4], [5, 4])) {
+          return targetToMove(board, { from: [0, 1], to: [2, 2] }, color);
+        }
+      }
+
+      const redCentral = cloneBoard(createInitialBoard());
+      redCentral[7][4] = redCentral[7][1];
+      redCentral[7][1] = null;
+      if (boardSignature(board) === boardSignature(redCentral) && color === BLACK) {
+        return targetToMove(board, { from: [0, 1], to: [2, 2] }, color);
+      }
+      return null;
+    }
+
+    function targetToMove(board, target, color = state.sideToMove) {
+      const moves = legalMoves(board, color);
+      return moves.find((move) =>
+        move.from.r === target.from[0] &&
+        move.from.c === target.from[1] &&
+        move.to.r === target.to[0] &&
+        move.to.c === target.to[1]
+      ) || null;
+    }
+
+    function posToDisplay(r, c) {
+      return state.flipped ? { y: 9 - r, x: 8 - c } : { y: r, x: c };
+    }
+
+    function eventToSquare(event) {
+      const rect = els.boardInner.getBoundingClientRect();
+      let x = Math.round(((event.clientX - rect.left) / rect.width) * 8);
+      let y = Math.round(((event.clientY - rect.top) / rect.height) * 9);
+      x = Math.max(0, Math.min(8, x));
+      y = Math.max(0, Math.min(9, y));
+      const c = state.flipped ? 8 - x : x;
+      const r = state.flipped ? 9 - y : y;
+      return { r, c };
+    }
+
+    function render() {
+      updateModeClasses();
+      renderPieces();
+      renderCoordinates();
+      renderHints();
+      renderHeat();
+      renderStatus();
+      renderCoach();
+      renderHistory();
+      renderCaptured();
+      renderTraining();
+      const bookChanged = renderBook();
+      const buttonsChanged = renderAudioButtons();
+      if (window.lucide && (iconsDirty || bookChanged || buttonsChanged)) {
+        window.lucide.createIcons();
+        iconsDirty = false;
+      }
+    }
+
+    function updateModeClasses() {
+      document.body.classList.toggle("coach-unlocked", state.coachUnlocked);
+      document.body.classList.toggle("online-mode", Boolean(state.online.role || state.online.connected));
+      document.body.classList.toggle("online-connected", state.online.connected);
+      if (!state.coachUnlocked) setActiveTab("play", { silent: true });
+    }
+
+    function renderCoordinates() {
+      const signature = String(state.flipped);
+      if (renderCache.coords === signature) return;
+      renderCache.coords = signature;
+      const cols = "ABCDEFGHI".split("");
+      const rows = Array.from({ length: ROWS }, (_, index) => String(index + 1));
+      const colHtml = cols.map((label, c) => {
+        const d = posToDisplay(0, c);
+        return `
+          <span class="coord-label col top" style="--i:${d.x}">${label}</span>
+          <span class="coord-label col bottom" style="--i:${d.x}">${label}</span>
+        `;
+      }).join("");
+      const rowHtml = rows.map((label, r) => {
+        const d = posToDisplay(r, 0);
+        return `
+          <span class="coord-label row left" style="--i:${d.y}">${label}</span>
+          <span class="coord-label row right" style="--i:${d.y}">${label}</span>
+        `;
+      }).join("");
+      els.coordLayer.innerHTML = colHtml + rowHtml;
+    }
+
+    function renderPieces() {
+      els.pieceLayer.innerHTML = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const p = state.board[r][c];
+          if (!p) continue;
+          const d = posToDisplay(r, c);
+          const div = document.createElement("button");
+          div.className = `piece ${p.color}`;
+          if (state.selected && state.selected.r === r && state.selected.c === c) div.classList.add("selected");
+          if (state.lastMove && state.lastMove.to.r === r && state.lastMove.to.c === c) div.classList.add("last-move");
+          div.style.setProperty("--x", d.x);
+          div.style.setProperty("--y", d.y);
+          div.type = "button";
+          div.textContent = GLYPH[p.color][p.type];
+          div.title = `${p.color} ${NAME[p.type]}`;
+          div.addEventListener("click", (event) => {
+            event.stopPropagation();
+            handleSquareClick(r, c);
+          });
+          els.pieceLayer.appendChild(div);
+        }
+      }
+    }
+
+    function renderHints() {
+      els.hintLayer.innerHTML = "";
+      if (state.lastMove) {
+        appendMoveRoute(state.lastMove, "last");
+        appendBoardMarker(state.lastMove.from, "last-move-mark from", "from");
+        appendBoardMarker(state.lastMove.to, "last-move-mark to", "last");
+      }
+      if (state.analysisView &&
+          state.analysisView.signature === boardSignature(state.board) &&
+          state.analysisView.side === state.sideToMove) {
+        if (state.analysisView.type === "opponent") {
+          if (state.analysisView.anchor) {
+            appendBoardMarker(state.analysisView.anchor, "intent-mark", "intent");
+          }
+          const threats = state.analysisView.threats && state.analysisView.threats.length
+            ? state.analysisView.threats
+            : state.analysisView.move ? [{ move: state.analysisView.move }] : [];
+          threats.slice(0, 4).forEach((item, index) => {
+            appendMoveRoute(item.move, "intent");
+            appendBoardMarker(item.move.from, "intent-mark source", `T${index + 1}`);
+            appendBoardMarker(item.move.to, "intent-mark target", `aim ${index + 1}`);
+          });
+        } else if (state.analysisView.type === "ours" && state.analysisView.move) {
+          appendMoveRoute(state.analysisView.move, "plan");
+          appendBoardMarker(state.analysisView.move.from, "plan-mark source", "plan");
+          appendBoardMarker(state.analysisView.move.to, "plan-mark target", "goal");
+        }
+      }
+      if (state.selected) {
+        const d = posToDisplay(state.selected.r, state.selected.c);
+        const aura = document.createElement("div");
+        aura.className = "selection-aura";
+        aura.style.setProperty("--x", d.x);
+        aura.style.setProperty("--y", d.y);
+        els.hintLayer.appendChild(aura);
+
+        [
+          ["-34px", "-28px"],
+          ["31px", "-24px"],
+          ["-29px", "30px"],
+          ["34px", "27px"]
+        ].forEach(([sx, sy], index) => {
+          const spark = document.createElement("div");
+          spark.className = "selection-spark";
+          spark.style.setProperty("--x", d.x);
+          spark.style.setProperty("--y", d.y);
+          spark.style.setProperty("--sx", sx);
+          spark.style.setProperty("--sy", sy);
+          spark.style.animationDelay = `${index * 120}ms`;
+          els.hintLayer.appendChild(spark);
+        });
+      }
+      for (const move of state.selectedMoves) {
+        const d = posToDisplay(move.to.r, move.to.c);
+        const dot = document.createElement("div");
+        dot.className = move.capture ? "capture-dot" : "move-dot";
+        dot.style.setProperty("--x", d.x);
+        dot.style.setProperty("--y", d.y);
+        els.hintLayer.appendChild(dot);
+      }
+      if (state.hintMove) {
+        appendMoveRoute(state.hintMove, "coach");
+        appendBoardMarker(state.hintMove.from, "coach-mark source", "move");
+        appendBoardMarker(state.hintMove.to, "coach-mark target", "target");
+      }
+    }
+
+    function appendBoardMarker(point, className, label) {
+      const d = posToDisplay(point.r, point.c);
+      const marker = document.createElement("div");
+      marker.className = className;
+      marker.dataset.label = label;
+      marker.style.setProperty("--x", d.x);
+      marker.style.setProperty("--y", d.y);
+      els.hintLayer.appendChild(marker);
+    }
+
+    function appendMoveRoute(move, type) {
+      const from = posToDisplay(move.from.r, move.from.c);
+      const to = posToDisplay(move.to.r, move.to.c);
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", `${type}-route-svg`);
+      svg.setAttribute("viewBox", "0 0 8 9");
+      svg.setAttribute("preserveAspectRatio", "none");
+
+      if (type !== "last") {
+        const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+        marker.setAttribute("id", `${type}ArrowHead`);
+        marker.setAttribute("markerWidth", "4");
+        marker.setAttribute("markerHeight", "4");
+        marker.setAttribute("refX", "3.4");
+        marker.setAttribute("refY", "2");
+        marker.setAttribute("orient", "auto");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "M 0 0 L 4 2 L 0 4 z");
+        const fill = type === "intent"
+          ? "rgba(255, 111, 90, 0.96)"
+          : type === "plan"
+            ? "rgba(195, 241, 216, 0.98)"
+            : "rgba(255, 211, 105, 0.96)";
+        path.setAttribute("fill", fill);
+        marker.appendChild(path);
+        defs.appendChild(marker);
+        svg.appendChild(defs);
+      }
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", from.x);
+      line.setAttribute("y1", from.y);
+      line.setAttribute("x2", to.x);
+      line.setAttribute("y2", to.y);
+      line.setAttribute("class", type === "coach" ? "coach-route" : "last-route");
+      line.setAttribute("class", `${type}-route`);
+      if (type !== "last") line.setAttribute("marker-end", `url(#${type}ArrowHead)`);
+      svg.appendChild(line);
+      els.hintLayer.appendChild(svg);
+    }
+
+    function renderHeat() {
+      els.heatLayer.innerHTML = "";
+      els.heatLayer.classList.toggle("active", state.heatActive);
+      if (!state.heatActive) return;
+      const enemy = state.sideToMove === RED ? BLACK : RED;
+      const moves = generatePseudoMoves(state.board, enemy, false);
+      const hot = new Map();
+      for (const move of moves) {
+        const key = `${move.to.r},${move.to.c}`;
+        hot.set(key, (hot.get(key) || 0) + 1);
+      }
+      [...hot.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 16)
+        .forEach(([key, count]) => {
+          const [r, c] = key.split(",").map(Number);
+          const d = posToDisplay(r, c);
+          const node = document.createElement("div");
+          node.className = "heat-node";
+          node.style.setProperty("--x", d.x);
+          node.style.setProperty("--y", d.y);
+          node.style.opacity = Math.min(0.78, 0.22 + count * 0.08);
+          els.heatLayer.appendChild(node);
+        });
+    }
+
+    function renderStatus() {
+      const side = state.sideToMove === RED ? "Red" : "Black";
+      const inCheck = isInCheck(state.board, state.sideToMove);
+      const cfg = DIFFICULTY[els.difficultySelect.value] || DIFFICULTY.emperor;
+      els.aiLabel.textContent = state.online.connected ? "Online" : state.aiEnabled ? cfg.label : "Manual";
+      els.connectionStatus.textContent = state.online.status;
+      els.turnStatus.textContent = state.gameOver
+        ? "Game finished"
+        : state.aiThinking
+          ? "AI thinking"
+          : state.online.connected
+            ? `${playerLabel(state.sideToMove)} to move`
+            : `${side} to move`;
+
+      if (state.coachThinking) {
+        const coach = selectedCoachProfile();
+        els.gameStatus.textContent = `${coach.level.label} is calculating.`;
+      } else if (state.notice) {
+        els.gameStatus.textContent = state.notice;
+      } else if (state.training) {
+        els.gameStatus.textContent = state.training.completed ? state.training.lesson.success : state.training.lesson.insight;
+      } else if (state.aiThinking) {
+        els.gameStatus.textContent = "Calculating forcing lines and defensive resources.";
+      } else if (inCheck) {
+        els.gameStatus.textContent = state.online.connected ? `${playerLabel(state.sideToMove)} is in check.` : `${side} is in check.`;
+      } else if (state.online.connected) {
+        els.gameStatus.textContent = state.sideToMove === state.playerColor
+          ? "Your move."
+          : `Waiting for ${playerLabel(other(state.playerColor))}.`;
+      } else if (!state.aiEnabled) {
+        els.gameStatus.textContent = `Manual mode: ${side} to move.`;
+      } else {
+        els.gameStatus.textContent = state.sideToMove === state.playerColor ? "Your move." : "Opponent move.";
+      }
+
+      const evalRed = evaluateBoard(state.board, RED, els.styleSelect.value) / 100;
+      els.evalScore.textContent = `${evalRed >= 0 ? "+" : ""}${evalRed.toFixed(2)}`;
+      const meter = Math.max(4, Math.min(96, 50 + evalRed * 7));
+      els.evalMeter.style.width = `${meter}%`;
+      els.phaseLabel.textContent = phaseLabel(state.board);
+      els.pressureLabel.textContent = pressureLabel(state.board);
+    }
+
+    function phaseLabel(board) {
+      let count = 0;
+      let heavy = 0;
+      for (const row of board) {
+        for (const p of row) {
+          if (!p) continue;
+          count++;
+          if (p.type === "R" || p.type === "C" || p.type === "H") heavy++;
+        }
+      }
+      if (count > 26 && heavy > 10) return "Opening";
+      if (heavy >= 5) return "Middle";
+      return "Endgame";
+    }
+
+    function pressureLabel(board) {
+      const red = kingPressure(board, RED);
+      const black = kingPressure(board, BLACK);
+      const center = centralControl(board, RED) - centralControl(board, BLACK);
+      if (Math.abs(center) > 30) return center > 0 ? "Red center" : "Black center";
+      if (red - black > 45) return "Red attack";
+      if (black - red > 45) return "Black attack";
+      return "Balanced";
+    }
+
+    function renderCoach() {
+      if (!state.coachUnlocked) {
+        if (renderCache.coach === "locked") return;
+        renderCache.coach = "locked";
+        els.coachList.innerHTML = "";
+        els.reviewList.innerHTML = "";
+        return;
+      }
+      const coach = selectedCoachProfile();
+      const adviceSig = state.coachAdvice && state.coachAdvice.signature === boardSignature(state.board)
+        ? state.coachAdvice.lines.join("|")
+        : "";
+      const trainingSig = state.training ? `${state.training.lesson.id}:${state.training.completed}` : "match";
+      const signature = [
+        boardSignature(state.board),
+        state.sideToMove,
+        coach.levelKey,
+        coach.focusKey,
+        trainingSig,
+        adviceSig
+      ].join("::");
+      if (renderCache.coach === signature) return;
+      renderCache.coach = signature;
+      const lines = analyzePosition();
+      els.coachList.innerHTML = lines.map((line) => `<li>${line}</li>`).join("");
+      const review = buildReview();
+      els.reviewList.innerHTML = review.map((line) => `<li>${line}</li>`).join("");
+    }
+
+    function analyzePosition() {
+      if (state.training && !state.training.completed) {
+        return [
+          state.training.lesson.miss,
+          state.training.lesson.insight,
+          "Search for purpose first: check, capture, threat, then improvement."
+        ];
+      }
+
+      if (state.coachAdvice &&
+          state.coachAdvice.signature === boardSignature(state.board) &&
+          state.coachAdvice.side === state.sideToMove) {
+        return state.coachAdvice.lines;
+      }
+
+      const coach = selectedCoachProfile();
+      const style = coach.styleKey;
+      const side = state.sideToMove;
+      const bookMove = findBookMove(state.board, side, style);
+      const tacticalMoves = orderedMoves(state.board, side, style);
+      const moves = bookMove
+        ? [bookMove, ...tacticalMoves.filter((move) => !movesEqual(move, bookMove))].slice(0, 3)
+        : tacticalMoves.slice(0, 3);
+      const evalSide = evaluateBoard(state.board, side, style);
+      const lines = [];
+      if (isInCheck(state.board, side)) {
+        lines.push(`<span class="danger-text">Emergency:</span> your general is under direct attack. Resolve check before planning.`);
+      } else if (evalSide > 180) {
+        lines.push(`<span class="success-text">Initiative:</span> you can press. Improve a rook or cannon before trading.`);
+      } else if (evalSide < -180) {
+        lines.push(`<span class="danger-text">Defensive posture:</span> close files, trade active attackers, and keep palace defenders connected.`);
+      } else {
+        lines.push("The position is playable. Fight for the central files and avoid single-piece attacks.");
+      }
+
+      if (moves[0]) {
+        lines.push(`Candidate: ${moveText(state.board, moves[0])}. It scores well for ${STYLE[style].label.toLowerCase()} plans.`);
+      }
+      if (moves[1]) lines.push(`Alternative: ${moveText(state.board, moves[1])}, useful when you want a quieter setup.`);
+      lines.push(`Coach engine: ${coach.level.label}.`);
+      lines.push(`Field read: ${phaseLabel(state.board)} phase, ${pressureLabel(state.board).toLowerCase()} pressure.`);
+      return lines;
+    }
+
+    function buildReview() {
+      const redShelter = kingShelter(state.board, RED);
+      const blackShelter = kingShelter(state.board, BLACK);
+      const redPressure = kingPressure(state.board, RED);
+      const blackPressure = kingPressure(state.board, BLACK);
+      const lines = [];
+      lines.push(redShelter >= blackShelter ? "Your palace is at least as stable as Black's." : "Your palace needs attention: add advisor or elephant cover.");
+      lines.push(redPressure >= blackPressure ? "Your attacking pieces are close enough to create threats." : "Black is closer to your king. Trade one active attacker if possible.");
+      lines.push(centralControl(state.board, RED) >= centralControl(state.board, BLACK) ? "You have healthy central presence." : "The center is slipping. Reclaim a central file or advance a middle soldier.");
+      lines.push("A pro player asks every move: what is attacked, what is pinned, what file opens next?");
+      return lines;
+    }
+
+    function renderHistory() {
+      const signature = state.history.map((entry) => entry.text).join("|");
+      if (renderCache.history === signature) return;
+      renderCache.history = signature;
+      if (!state.history.length) {
+        els.historyList.innerHTML = `<div class="history-row"><strong>0</strong><span>No moves yet.</span></div>`;
+        return;
+      }
+      els.historyList.innerHTML = state.history
+        .map((entry, index) => `<div class="history-row"><strong>${index + 1}</strong><span>${entry.text}</span></div>`)
+        .reverse()
+        .join("");
+    }
+
+    function renderCaptured() {
+      const captured = [...state.captured.red, ...state.captured.black];
+      const signature = captured.map((p) => p.id).join("|");
+      if (renderCache.captured === signature) return;
+      renderCache.captured = signature;
+      if (!captured.length) {
+        els.capturedLine.innerHTML = "Captured pieces will appear here.";
+        return;
+      }
+      els.capturedLine.innerHTML = captured
+        .map((p) => `<span class="mini-piece" title="Captured ${p.color} ${NAME[p.type]}">${GLYPH[p.color][p.type]}</span>`)
+        .join("");
+    }
+
+    function renderTraining() {
+      const activeId = state.training ? `${state.training.lesson.id}:${state.training.completed}` : "match";
+      const signature = `${activeId}|${JSON.stringify(state.progress)}`;
+      if (renderCache.training === signature) return;
+      renderCache.training = signature;
+      const doneCount = TRAINING.filter((lesson) => state.progress[lesson.id]).length;
+      const pct = Math.round((doneCount / TRAINING.length) * 100);
+      els.trainingMeter.style.width = `${Math.max(5, pct)}%`;
+      els.progressSteps.innerHTML = ["Opening", "Attack", "Defense", "Endgame"]
+        .map((label) => {
+          const done = TRAINING.some((lesson) => lesson.path === label && state.progress[lesson.id]);
+          return `<div class="step ${done ? "done" : ""}">${label}</div>`;
+        })
+        .join("");
+      els.lessonGrid.innerHTML = TRAINING.map((lesson, index) => {
+        const active = state.training && state.training.lesson.id === lesson.id;
+        const done = state.progress[lesson.id];
+        return `
+          <button class="lesson-btn ${active ? "active" : ""} ${done ? "done" : ""}" data-lesson="${index}">
+            <strong>${lesson.title}<span class="badge">${done ? "Done" : lesson.path}</span></strong>
+            <span>${lesson.summary}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderBook() {
+      const signature = String(BOOK.length);
+      if (renderCache.book === signature) return false;
+      renderCache.book = signature;
+      els.bookPanel.innerHTML = BOOK.map((line, index) => `
+        <div class="book-line">
+          <strong>${line.title} <span class="badge">${line.notation}</span></strong>
+          <p>${line.plan}</p>
+          <button class="book-btn" data-book="${index}"><i data-lucide="move-up-right"></i>${line.style}</button>
+        </div>
+      `).join("");
+      return true;
+    }
+
+    function renderAudioButtons() {
+      const signature = [
+        state.aiEnabled,
+        state.autoOurPlan,
+        state.soundEnabled,
+        state.coachSpeechEnabled
+      ].join("|");
+      if (renderCache.buttons === signature) return false;
+      renderCache.buttons = signature;
+      const manualIcon = state.aiEnabled ? "bot" : "users";
+      els.manualModeBtn.innerHTML = `<i data-lucide="${manualIcon}"></i>${state.aiEnabled ? "AI Opponent" : "Manual"}`;
+      els.manualModeBtn.classList.toggle("active", !state.aiEnabled);
+      els.manualModeBtn.setAttribute("aria-pressed", String(!state.aiEnabled));
+      els.manualModeBtn.title = state.aiEnabled ? "AI controls the opponent" : "Manual mode: you control both sides";
+
+      els.ourPlanBtn.innerHTML = `<i data-lucide="${state.autoOurPlan ? "route" : "route"}"></i>${state.autoOurPlan ? "Our Plan On" : "Our Plan"}`;
+      els.ourPlanBtn.classList.toggle("active", state.autoOurPlan);
+      els.ourPlanBtn.setAttribute("aria-pressed", String(state.autoOurPlan));
+      els.ourPlanBtn.title = state.autoOurPlan ? "Auto coach is on" : "Turn on automatic coach plan";
+
+      const soundIcon = state.soundEnabled ? "volume-2" : "volume-x";
+      els.soundFxBtn.innerHTML = `<i data-lucide="${soundIcon}"></i>`;
+      els.soundFxBtn.classList.toggle("active", state.soundEnabled);
+      els.soundFxBtn.classList.toggle("muted", !state.soundEnabled);
+      els.soundFxBtn.setAttribute("aria-pressed", String(state.soundEnabled));
+      els.soundFxBtn.title = state.soundEnabled ? "Sound effects on" : "Sound effects off";
+
+      const coachIcon = state.coachSpeechEnabled ? "message-circle" : "message-circle-off";
+      els.coachSpeechBtn.innerHTML = `<i data-lucide="${coachIcon}"></i>`;
+      els.coachSpeechBtn.classList.toggle("active", state.coachSpeechEnabled);
+      els.coachSpeechBtn.classList.toggle("muted", !state.coachSpeechEnabled);
+      els.coachSpeechBtn.setAttribute("aria-pressed", String(state.coachSpeechEnabled));
+      els.coachSpeechBtn.title = state.coachSpeechEnabled ? "Coach voice on" : "Coach voice off";
+      return true;
+    }
+
+    function ensureAudioContext() {
+      const AudioEngine = window.AudioContext || window.webkitAudioContext;
+      if (!AudioEngine) return null;
+      if (!audioCtx) audioCtx = new AudioEngine();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, duration = 0.08, type = "sine", gain = 0.055, delay = 0, endFreq = null) {
+      if (!state.soundEnabled) return;
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+      const start = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      if (endFreq) osc.frequency.linearRampToValueAtTime(endFreq, start + duration);
+      amp.gain.setValueAtTime(0.001, start);
+      amp.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+      amp.gain.exponentialRampToValueAtTime(0.001, start + duration);
+      osc.connect(amp).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration + 0.03);
+    }
+
+    function playSound(kind) {
+      if (!state.soundEnabled) return;
+      if (kind === "select") {
+        playTone(540, 0.07, "triangle", 0.038, 0, 760);
+        playTone(1080, 0.08, "sine", 0.026, 0.025);
+      } else if (kind === "move") {
+        playTone(260, 0.09, "triangle", 0.052, 0, 380);
+        playTone(520, 0.08, "sine", 0.025, 0.06);
+      } else if (kind === "aiMove") {
+        playTone(220, 0.08, "sawtooth", 0.035, 0, 310);
+        playTone(410, 0.11, "triangle", 0.026, 0.045);
+      } else if (kind === "capture") {
+        playTone(120, 0.13, "sawtooth", 0.065, 0, 80);
+        playTone(740, 0.09, "square", 0.035, 0.035, 420);
+      } else if (kind === "invalid") {
+        playTone(140, 0.12, "square", 0.045, 0, 105);
+      } else if (kind === "hint") {
+        playTone(660, 0.08, "sine", 0.036);
+        playTone(990, 0.1, "sine", 0.03, 0.07);
+      } else if (kind === "analyze") {
+        playTone(320, 0.07, "triangle", 0.036);
+        playTone(480, 0.07, "triangle", 0.034, 0.06);
+        playTone(640, 0.09, "triangle", 0.032, 0.12);
+      } else if (kind === "toggle") {
+        playTone(420, 0.07, "sine", 0.034);
+        playTone(720, 0.08, "sine", 0.03, 0.055);
+      } else if (kind === "lesson") {
+        playTone(500, 0.08, "triangle", 0.034);
+        playTone(750, 0.12, "triangle", 0.032, 0.08);
+      }
+    }
+
+    function stripHtml(text) {
+      const div = document.createElement("div");
+      div.innerHTML = text;
+      return (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+    }
+
+    function speakCoach(text, force = false) {
+      if (!state.coachUnlocked) return;
+      if (!state.coachSpeechEnabled || !("speechSynthesis" in window)) return;
+      const clean = localizeCoachSpeech(stripHtml(text));
+      if (!clean || (!force && speakCoach.lastText === clean)) return;
+      speakCoach.lastText = clean;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.lang = state.coachLanguage;
+      utterance.rate = state.coachLanguage.startsWith("vi") ? 0.9 : 0.94;
+      utterance.pitch = state.coachVoiceStyle === "female" ? 1.08 : state.coachVoiceStyle === "male" ? 0.86 : 0.92;
+      utterance.volume = 0.95;
+      const voice = getPreferredVoice(state.coachLanguage, state.coachVoiceStyle);
+      if (voice) utterance.voice = voice;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function getPreferredVoice(language, style) {
+      const voices = window.speechSynthesis.getVoices();
+      const base = language.split("-")[0].toLowerCase();
+      const matching = voices.filter((voice) => voice.lang && voice.lang.toLowerCase().startsWith(base));
+      const pool = matching.length ? matching : voices;
+      if (!pool.length || style === "auto") return pool[0] || null;
+
+      const femaleHints = ["female", "woman", "girl", "zira", "susan", "aria", "mai", "linh", "hoai", "huyen", "eva"];
+      const maleHints = ["male", "man", "guy", "david", "mark", "nam", "an", "paul", "alex"];
+      const hints = style === "female" ? femaleHints : maleHints;
+      return pool.find((voice) => hints.some((hint) => voice.name.toLowerCase().includes(hint))) || pool[0] || null;
+    }
+
+    function localizeCoachSpeech(text) {
+      if (!state.coachLanguage.startsWith("vi")) return text;
+      let spoken = text;
+      const replacements = [
+        ["Coach voice enabled.", "Đã bật giọng huấn luyện viên."],
+        ["Our plan visualized.", "Đã hiển thị kế hoạch của ta."],
+        ["Opponent plan visualized.", "Đã hiển thị kế hoạch của đối thủ."],
+        ["AI opponent enabled.", "Đã bật đối thủ máy."],
+        ["Manual mode enabled. You control both sides.", "Đã bật chế độ tự chơi. Bạn điều khiển cả hai bên."],
+        ["Best plan:", "Kế hoạch tốt nhất:"],
+        ["Opponent intention:", "Ý đồ của đối thủ:"],
+        ["Their likely plan:", "Kế hoạch có khả năng của đối thủ:"],
+        ["Your practical answer:", "Cách đáp trả thực tế của bạn:"],
+        ["Threat", "Mối đe dọa"],
+        ["Why:", "Lý do:"],
+        ["Plan:", "Kế hoạch:"],
+        ["Expect", "Dự kiến"],
+        ["because", "vì"],
+        ["captures", "ăn quân"],
+        ["checkmate", "chiếu bí"]
+      ];
+      replacements.forEach(([from, to]) => {
+        spoken = spoken.split(from).join(to);
+      });
+      return `Huấn luyện viên tiếng Việt. ${spoken}`;
+    }
+
+    function toggleSoundEffects() {
+      state.soundEnabled = !state.soundEnabled;
+      saveBooleanSetting("xiangqi-pro-sound", state.soundEnabled);
+      render();
+      if (state.soundEnabled) playSound("toggle");
+    }
+
+    function toggleCoachSpeech() {
+      if (!requireCoachUnlocked()) return;
+      state.coachSpeechEnabled = !state.coachSpeechEnabled;
+      saveBooleanSetting("xiangqi-pro-coach-speech", state.coachSpeechEnabled);
+      render();
+      if (state.coachSpeechEnabled) {
+        const firstLine = analyzePosition()[0] || "Coach voice enabled.";
+        speakCoach(`Coach voice enabled. ${stripHtml(firstLine)}`, true);
+      } else if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function handleSquareClick(r, c) {
+      if (state.aiThinking || state.coachThinking || state.gameOver) return;
+      if (state.training && state.training.completed) return;
+      if (!state.training && state.online.connected && state.sideToMove !== state.playerColor) {
+        playSound("invalid");
+        flashStatus(`Waiting for ${playerLabel(other(state.playerColor))}.`);
+        return;
+      }
+      if (!state.training && state.aiEnabled && state.sideToMove !== state.playerColor) return;
+
+      const piece = state.board[r][c];
+      const chosen = state.selectedMoves.find((move) => move.to.r === r && move.to.c === c);
+      if (chosen) {
+        attemptMove(chosen, "human");
+        return;
+      }
+
+      if (piece && piece.color === state.sideToMove) {
+        state.analysisView = null;
+        state.coachAdvice = null;
+        state.selected = { r, c };
+        state.selectedMoves = legalMoves(state.board, state.sideToMove).filter((move) => move.from.r === r && move.from.c === c);
+        state.hintMove = null;
+        playSound("select");
+        render();
+        return;
+      }
+
+      if (state.selected) playSound("invalid");
+      state.selected = null;
+      state.selectedMoves = [];
+      render();
+    }
+
+    function attemptMove(move, actor) {
+      let completedLesson = null;
+      if (state.training && actor === "human" && !state.training.completed) {
+        if (!sameMove(move, state.training.lesson.target)) {
+          state.selected = null;
+          state.selectedMoves = [];
+          playSound("invalid");
+          flashStatus(state.training.lesson.miss);
+          render();
+          return;
+        }
+        completedLesson = state.training.lesson;
+        state.training.completed = true;
+        state.progress[state.training.lesson.id] = true;
+        saveProgress();
+      }
+
+      const onlineBeforeSignature = state.online.connected && actor === "human"
+        ? boardSignature(state.board)
+        : null;
+      applyMove(move, actor);
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      checkGameEnd();
+      render();
+      if (completedLesson) speakCoach(completedLesson.success, true);
+      if (onlineBeforeSignature) sendOnlineMove(move, onlineBeforeSignature);
+
+      if (!state.training && !state.online.connected && state.aiEnabled && !state.gameOver && state.sideToMove === state.aiColor) {
+        queueAiMove();
+      } else {
+        scheduleAutoOurPlan();
+      }
+    }
+
+    function applyMove(move, actor) {
+      state.notice = null;
+      state.coachAdvice = null;
+      state.coachThinking = false;
+      state.analysisView = null;
+      const before = state.board;
+      const moving = before[move.from.r][move.from.c];
+      const captured = before[move.to.r][move.to.c];
+      const mover = actor === "ai"
+        ? "AI"
+        : state.online.role
+          ? playerLabel(moving.color)
+          : moving.color === RED ? "Red" : "Black";
+      const text = `${mover}: ${moveText(before, move)}`;
+
+      state.history.push({
+        board: before,
+        sideToMove: state.sideToMove,
+        captured: { red: state.captured.red.slice(), black: state.captured.black.slice() },
+        lastMove: state.lastMove,
+        text
+      });
+
+      if (captured) state.captured[captured.color].push(captured);
+      state.board = makeMove(before, move);
+      state.lastMove = move;
+      state.sideToMove = other(state.sideToMove);
+      playSound(captured ? "capture" : actor === "ai" ? "aiMove" : "move");
+    }
+
+    function moveText(board, move) {
+      const piece = board[move.from.r][move.from.c];
+      const capture = board[move.to.r][move.to.c];
+      if (!piece) return "Unknown move";
+      const from = `${move.from.r + 1},${move.from.c + 1}`;
+      const to = `${move.to.r + 1},${move.to.c + 1}`;
+      return `${GLYPH[piece.color][piece.type]} ${from} to ${to}${capture ? ` captures ${GLYPH[capture.color][capture.type]}` : ""}`;
+    }
+
+    function checkGameEnd() {
+      const moves = legalMoves(state.board, state.sideToMove);
+      const missingKing = !findGeneral(state.board, state.sideToMove);
+      if (missingKing || !moves.length) {
+        const loser = state.sideToMove === RED ? "Red" : "Black";
+        const winner = state.sideToMove === RED ? "Black" : "Red";
+        state.gameOver = true;
+        const reason = missingKing || isInCheck(state.board, state.sideToMove) ? "checkmate" : "no legal move";
+        flashStatus(`${winner} wins by ${reason}.`);
+        return;
+      }
+      state.gameOver = false;
+    }
+
+    function queueAiMove() {
+      if (!state.aiEnabled) return;
+      state.aiThinking = true;
+      render();
+      setTimeout(() => {
+        const result = chooseAiMove(state.board, state.aiColor, els.difficultySelect.value, els.styleSelect.value);
+        if (result.move) {
+          applyMove(result.move, "ai");
+          const searched = ((result.nodes || 0) + (result.qNodes || 0)).toLocaleString();
+          flashStatus(
+            result.book
+              ? "AI used an opening book move."
+              : `AI searched depth ${result.depth}, ${searched} positions, ${result.ttHits || 0} cache hits.`
+          );
+        }
+        state.aiThinking = false;
+        checkGameEnd();
+        render();
+        scheduleAutoOurPlan();
+      }, 80);
+    }
+
+    function flashStatus(text, speechText = text) {
+      state.notice = text;
+      els.gameStatus.textContent = text;
+      speakCoach(speechText, true);
+      clearTimeout(flashStatus.timer);
+      flashStatus.timer = setTimeout(() => {
+        if (state.notice === text) {
+          state.notice = null;
+          renderStatus();
+        }
+      }, 2400);
+    }
+
+    function resetMatch(playerColor = RED, options = {}) {
+      const effectivePlayerColor = state.online.role
+        ? state.online.role === "guest" ? BLACK : RED
+        : playerColor;
+      playSound("toggle");
+      state.board = createInitialBoard();
+      state.sideToMove = RED;
+      state.playerColor = effectivePlayerColor;
+      state.aiColor = other(effectivePlayerColor);
+      state.flipped = effectivePlayerColor === BLACK;
+      state.selected = null;
+      state.selectedMoves = [];
+      state.history = [];
+      state.captured = { red: [], black: [] };
+      state.gameOver = false;
+      state.aiThinking = false;
+      if (state.online.role) state.aiEnabled = false;
+      state.lastMove = null;
+      state.training = null;
+      state.hintMove = null;
+      state.heatActive = false;
+      state.notice = null;
+      state.coachThinking = false;
+      state.coachAdvice = null;
+      state.analysisView = null;
+      render();
+      if (state.online.connected && options.broadcast !== false) {
+        sendOnlineMessage({ type: "reset", snapshot: buildOnlineSnapshot() });
+      }
+      if (!state.online.connected && state.aiEnabled && state.sideToMove === state.aiColor) {
+        queueAiMove();
+      } else {
+        scheduleAutoOurPlan();
+      }
+    }
+
+    function newGame() {
+      resetMatch(state.online.role ? state.playerColor : RED);
+    }
+
+    function startAsBlackGame() {
+      resetMatch(BLACK);
+    }
+
+    function toggleManualMode() {
+      if (state.aiThinking || state.coachThinking) return;
+      state.aiEnabled = !state.aiEnabled;
+      saveBooleanSetting("xiangqi-pro-ai-enabled", state.aiEnabled);
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      state.analysisView = null;
+      state.coachAdvice = null;
+      flashStatus(state.aiEnabled ? "AI opponent enabled." : "Manual mode enabled. You control both sides.");
+      render();
+      if (state.aiEnabled && !state.training && !state.gameOver && state.sideToMove === state.aiColor) {
+        queueAiMove();
+      } else {
+        scheduleAutoOurPlan();
+      }
+    }
+
+    function undoMove(options = {}) {
+      if (state.aiThinking || !state.history.length) return;
+      playSound("toggle");
+      const prev = state.history.pop();
+      state.board = prev.board;
+      state.sideToMove = prev.sideToMove;
+      state.captured = prev.captured;
+      state.lastMove = prev.lastMove;
+      state.gameOver = false;
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      state.notice = null;
+      state.coachThinking = false;
+      state.coachAdvice = null;
+      state.analysisView = null;
+      render();
+      if (state.online.connected && options.broadcast !== false) {
+        sendOnlineMessage({ type: "undo" });
+      }
+      scheduleAutoOurPlan();
+    }
+
+    function loadLesson(index) {
+      const lesson = TRAINING[index];
+      playSound("lesson");
+      state.board = lesson.board();
+      state.sideToMove = RED;
+      state.playerColor = RED;
+      state.aiColor = BLACK;
+      state.selected = null;
+      state.selectedMoves = [];
+      state.history = [];
+      state.captured = { red: [], black: [] };
+      state.lastMove = null;
+      state.gameOver = false;
+      state.training = { lesson, completed: false };
+      state.hintMove = targetToMove(state.board, lesson.target);
+      state.heatActive = false;
+      state.notice = null;
+      state.coachThinking = false;
+      state.coachAdvice = null;
+      state.analysisView = null;
+      setActiveTab("train");
+      render();
+      speakCoach(lesson.insight, true);
+    }
+
+    function resumeMatch() {
+      newGame();
+      setActiveTab("play");
+    }
+
+    function showHint(options = {}) {
+      if (!requireCoachUnlocked()) return;
+      if (state.gameOver || state.aiThinking || state.coachThinking) return;
+      if (!state.training && !isCoachTurn()) {
+        flashStatus("Wait for your turn, then ask the coach for the best move.");
+        return;
+      }
+      if (options.sound !== false) playSound("hint");
+
+      if (state.training && !state.training.completed) {
+        state.hintMove = targetToMove(state.board, state.training.lesson.target);
+        if (state.hintMove) {
+          state.selected = { ...state.hintMove.from };
+          state.selectedMoves = [state.hintMove];
+        }
+        const text = state.hintMove
+          ? `Hint: ${moveText(state.board, state.hintMove)}.`
+          : "No legal hint is available in this position.";
+        if (options.speak !== false) speakCoach(text, true);
+        render();
+        return;
+      }
+
+      const signature = boardSignature(state.board);
+      const side = state.sideToMove;
+      const coach = selectedCoachProfile();
+      state.coachThinking = true;
+      state.coachAdvice = null;
+      state.analysisView = null;
+      state.hintMove = null;
+      state.notice = `${coach.level.label} is calculating the best plan.`;
+      render();
+
+      setTimeout(() => {
+        if (signature !== boardSignature(state.board) || side !== state.sideToMove) {
+          state.coachThinking = false;
+          render();
+          return;
+        }
+
+        const advice = chooseCoachHint(state.board, coachSide(), coach.levelKey);
+        state.coachThinking = false;
+        state.coachAdvice = advice;
+        state.hintMove = advice.move;
+        if (advice.move) {
+          state.selected = { ...advice.move.from };
+          state.selectedMoves = [advice.move];
+          const speech = advice.lines.slice(0, 4).join(" ");
+          flashStatus(advice.status, options.speak === false ? "" : speech);
+        } else {
+          flashStatus(advice.status, advice.status);
+        }
+        render();
+      }, 60);
+    }
+
+    function applyBook(index) {
+      if (state.aiThinking || state.gameOver) return;
+      if (boardSignature(state.board) !== INITIAL_SIG || state.sideToMove !== RED) {
+        flashStatus("Book lines start from the initial position.");
+        return;
+      }
+      const move = targetToMove(state.board, BOOK[index].move);
+      if (!move) return;
+      attemptMove(move, "human");
+      setActiveTab("play");
+    }
+
+    function analyzeNow() {
+      if (!requireCoachUnlocked()) return;
+      state.heatActive = !state.heatActive;
+      playSound("analyze");
+      showHint({ sound: false });
+      render();
+    }
+
+    function setActiveTab(name, options = {}) {
+      if (!state.coachUnlocked && name !== "play") name = "play";
+      document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === name));
+      document.querySelectorAll(".panel").forEach((panel) => panel.classList.toggle("active", panel.id === `panel-${name}`));
+      if (!options.silent && window.lucide) window.lucide.createIcons();
+    }
+
+    function readProgress() {
+      try {
+        return JSON.parse(localStorage.getItem("xiangqi-pro-progress") || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveProgress() {
+      localStorage.setItem("xiangqi-pro-progress", JSON.stringify(state.progress));
+    }
+
+    function readBooleanSetting(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : value === "true";
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveBooleanSetting(key, value) {
+      try {
+        localStorage.setItem(key, String(value));
+      } catch {
+        // Preference storage is optional; the game still works without it.
+      }
+    }
+
+    function readTextSetting(key, fallback) {
+      try {
+        return localStorage.getItem(key) || fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveTextSetting(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        // Preference storage is optional; the game still works without it.
+      }
+    }
+
+    function normalizeSecret(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "-");
+    }
+
+    function unlockCoachTools() {
+      const typed = normalizeSecret(els.coachPasswordInput.value);
+      if (typed !== PRIVATE_COACH_PASSWORD) {
+        playSound("invalid");
+        flashStatus("Private coach password did not match.");
+        return;
+      }
+      state.coachUnlocked = true;
+      saveBooleanSetting("dtct-xiangqi-coach-unlocked", true);
+      state.coachLevel = COACH_LEVEL[state.coachLevel] ? state.coachLevel : "2";
+      els.coachLevelSelect.value = state.coachLevel;
+      els.coachPasswordInput.value = "";
+      renderCache.coach = null;
+      playSound("toggle");
+      flashStatus(`Private coach unlocked for ${localPlayerLabel()}.`);
+      render();
+    }
+
+    function sanitizeRoomCode(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 44);
+    }
+
+    function createRoomCode() {
+      const token = Math.random().toString(36).slice(2, 8);
+      return `${ONLINE_PREFIX}-${token}`;
+    }
+
+    function ensureRoomCode() {
+      const room = sanitizeRoomCode(els.roomCodeInput.value) || createRoomCode();
+      state.online.roomId = room;
+      els.roomCodeInput.value = room;
+      return room;
+    }
+
+    function setOnlineStatus(text) {
+      state.online.status = text;
+      els.connectionStatus.textContent = text;
+      updateModeClasses();
+    }
+
+    function ensurePeerSupport() {
+      if (window.Peer) return true;
+      setOnlineStatus("PeerJS missing");
+      flashStatus("Online library did not load.");
+      return false;
+    }
+
+    function prepareOnlineRole(role, room) {
+      state.online.role = role;
+      state.online.roomId = room;
+      state.playerColor = role === "guest" ? BLACK : RED;
+      state.aiColor = other(state.playerColor);
+      state.aiEnabled = false;
+      state.flipped = state.playerColor === BLACK;
+      state.training = null;
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      state.analysisView = null;
+      state.coachAdvice = null;
+      saveBooleanSetting("xiangqi-pro-ai-enabled", false);
+    }
+
+    function closeOnlineConnection(options = {}) {
+      const wasOnline = Boolean(state.online.role || state.online.connected);
+      try {
+        if (state.online.conn) state.online.conn.close();
+      } catch {
+        // The peer connection may already be gone.
+      }
+      try {
+        if (state.online.peer) state.online.peer.destroy();
+      } catch {
+        // Peer cleanup is best effort.
+      }
+      state.online.peer = null;
+      state.online.conn = null;
+      state.online.role = null;
+      state.online.connected = false;
+      setOnlineStatus("Offline");
+      if (wasOnline && !options.silent) flashStatus("Online room closed.");
+      render();
+    }
+
+    function hostOnlineRoom() {
+      if (!ensurePeerSupport()) return;
+      closeOnlineConnection({ silent: true });
+      const room = ensureRoomCode();
+      prepareOnlineRole("host", room);
+      setOnlineStatus("Opening room");
+      render();
+
+      const peer = new Peer(room, { debug: 0 });
+      state.online.peer = peer;
+      peer.on("open", () => {
+        setOnlineStatus("Waiting");
+        flashStatus(`Room ${room} is ready for Cát Tiên.`);
+      });
+      peer.on("connection", (conn) => {
+        if (state.online.conn && state.online.conn.open) {
+          conn.on("open", () => conn.send({ type: "busy" }));
+          setTimeout(() => conn.close(), 300);
+          return;
+        }
+        setupOnlineConnection(conn, "host");
+      });
+      peer.on("error", (error) => {
+        const text = error && error.type === "unavailable-id"
+          ? "Room code is already in use."
+          : "Could not open online room.";
+        setOnlineStatus("Room error");
+        flashStatus(text);
+      });
+    }
+
+    function joinOnlineRoom() {
+      if (!ensurePeerSupport()) return;
+      const room = sanitizeRoomCode(els.roomCodeInput.value);
+      if (!room) {
+        playSound("invalid");
+        flashStatus("Enter the room code first.");
+        return;
+      }
+      closeOnlineConnection({ silent: true });
+      prepareOnlineRole("guest", room);
+      setOnlineStatus("Joining");
+      render();
+
+      const peer = new Peer(undefined, { debug: 0 });
+      state.online.peer = peer;
+      peer.on("open", () => {
+        const conn = peer.connect(room, { reliable: true });
+        setupOnlineConnection(conn, "guest");
+      });
+      peer.on("error", () => {
+        setOnlineStatus("Join error");
+        flashStatus("Could not join the room.");
+      });
+    }
+
+    function setupOnlineConnection(conn, role) {
+      state.online.conn = conn;
+      state.online.role = role;
+      conn.on("open", () => {
+        state.online.connected = true;
+        setOnlineStatus(role === "host" ? "Connected as Red" : "Connected as Black");
+        flashStatus(role === "host" ? "Cát Tiên joined the board." : "Joined Đình Tài's board.");
+        if (role === "host") {
+          sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
+        } else {
+          sendOnlineMessage({ type: "hello", name: localPlayerLabel() });
+        }
+        render();
+      });
+      conn.on("data", handleOnlineMessage);
+      conn.on("close", () => {
+        state.online.connected = false;
+        state.online.conn = null;
+        setOnlineStatus("Disconnected");
+        flashStatus("Online connection closed.");
+        render();
+      });
+      conn.on("error", () => {
+        state.online.connected = false;
+        setOnlineStatus("Connection error");
+        flashStatus("Online connection had an error.");
+        render();
+      });
+    }
+
+    function sendOnlineMessage(message) {
+      const conn = state.online.conn;
+      if (!conn || !conn.open) return false;
+      conn.send(message);
+      return true;
+    }
+
+    function handleOnlineMessage(message) {
+      if (!message || typeof message !== "object") return;
+      if (message.type === "busy") {
+        flashStatus("That room already has two players.");
+        return;
+      }
+      if (message.type === "hello" && state.online.role === "host") {
+        sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
+        return;
+      }
+      if (message.type === "snapshot") {
+        applyOnlineSnapshot(message.snapshot, "Board synced.");
+        return;
+      }
+      if (message.type === "move") {
+        applyRemoteMove(message);
+        return;
+      }
+      if (message.type === "reset") {
+        applyOnlineSnapshot(message.snapshot, "New online game.");
+        return;
+      }
+      if (message.type === "undo") {
+        undoMove({ broadcast: false });
+      }
+    }
+
+    function serializePiece(piece) {
+      return piece ? { color: piece.color, type: piece.type, id: piece.id } : null;
+    }
+
+    function deserializePiece(piece) {
+      return piece ? { color: piece.color, type: piece.type, id: piece.id } : null;
+    }
+
+    function serializeBoard(board) {
+      return board.map((row) => row.map(serializePiece));
+    }
+
+    function deserializeBoard(board) {
+      return board.map((row) => row.map(deserializePiece));
+    }
+
+    function serializeMove(move) {
+      return move ? {
+        from: { r: move.from.r, c: move.from.c },
+        to: { r: move.to.r, c: move.to.c },
+        capture: serializePiece(move.capture || null)
+      } : null;
+    }
+
+    function deserializeMove(move) {
+      return move ? {
+        from: { r: move.from.r, c: move.from.c },
+        to: { r: move.to.r, c: move.to.c },
+        capture: deserializePiece(move.capture || null)
+      } : null;
+    }
+
+    function serializeCaptured(captured) {
+      return {
+        red: captured.red.map(serializePiece),
+        black: captured.black.map(serializePiece)
+      };
+    }
+
+    function deserializeCaptured(captured) {
+      return {
+        red: (captured && captured.red ? captured.red : []).map(deserializePiece),
+        black: (captured && captured.black ? captured.black : []).map(deserializePiece)
+      };
+    }
+
+    function serializeHistory(history) {
+      return history.map((entry) => ({
+        board: serializeBoard(entry.board),
+        sideToMove: entry.sideToMove,
+        captured: serializeCaptured(entry.captured),
+        lastMove: serializeMove(entry.lastMove),
+        text: entry.text
+      }));
+    }
+
+    function deserializeHistory(history) {
+      return (history || []).map((entry) => ({
+        board: deserializeBoard(entry.board),
+        sideToMove: entry.sideToMove,
+        captured: deserializeCaptured(entry.captured),
+        lastMove: deserializeMove(entry.lastMove),
+        text: entry.text
+      }));
+    }
+
+    function buildOnlineSnapshot() {
+      return {
+        board: serializeBoard(state.board),
+        sideToMove: state.sideToMove,
+        captured: serializeCaptured(state.captured),
+        lastMove: serializeMove(state.lastMove),
+        history: serializeHistory(state.history),
+        gameOver: state.gameOver
+      };
+    }
+
+    function applyOnlineSnapshot(snapshot, notice) {
+      if (!snapshot || !snapshot.board) return;
+      state.board = deserializeBoard(snapshot.board);
+      state.sideToMove = snapshot.sideToMove || RED;
+      state.captured = deserializeCaptured(snapshot.captured);
+      state.lastMove = deserializeMove(snapshot.lastMove);
+      state.history = deserializeHistory(snapshot.history);
+      state.gameOver = Boolean(snapshot.gameOver);
+      state.playerColor = state.online.role === "guest" ? BLACK : RED;
+      state.aiColor = other(state.playerColor);
+      state.flipped = state.playerColor === BLACK;
+      state.aiEnabled = false;
+      state.training = null;
+      state.aiThinking = false;
+      state.coachThinking = false;
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      state.notice = null;
+      state.analysisView = null;
+      state.coachAdvice = null;
+      renderCache.history = null;
+      renderCache.captured = null;
+      if (notice) flashStatus(notice);
+      render();
+      scheduleAutoOurPlan();
+    }
+
+    function sendOnlineMove(move, beforeSignature) {
+      sendOnlineMessage({
+        type: "move",
+        beforeSignature,
+        move: serializeMove(move),
+        snapshot: buildOnlineSnapshot()
+      });
+    }
+
+    function applyRemoteMove(message) {
+      if (message.beforeSignature && message.beforeSignature !== boardSignature(state.board)) {
+        applyOnlineSnapshot(message.snapshot, "Board re-synced.");
+        return;
+      }
+      const moveData = message.move;
+      const legal = legalMoves(state.board, state.sideToMove).find((move) =>
+        move.from.r === moveData.from.r &&
+        move.from.c === moveData.from.c &&
+        move.to.r === moveData.to.r &&
+        move.to.c === moveData.to.c
+      );
+      if (!legal) {
+        applyOnlineSnapshot(message.snapshot, "Board re-synced.");
+        return;
+      }
+      applyMove(legal, "remote");
+      state.selected = null;
+      state.selectedMoves = [];
+      state.hintMove = null;
+      checkGameEnd();
+      render();
+      scheduleAutoOurPlan();
+    }
+
+    function copyInviteLink() {
+      const room = ensureRoomCode();
+      const url = new URL(window.location.href);
+      url.searchParams.set("room", room);
+      url.searchParams.set("join", "1");
+      const invite = url.toString();
+      const done = () => flashStatus("Invite link copied.");
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(invite).then(done).catch(() => {
+          els.roomCodeInput.select();
+          flashStatus("Room code is selected.");
+        });
+      } else {
+        els.roomCodeInput.select();
+        flashStatus("Room code is selected.");
+      }
+    }
+
+    function initRoomFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const room = sanitizeRoomCode(params.get("room"));
+      if (!room) {
+        els.roomCodeInput.value = createRoomCode();
+        return;
+      }
+      els.roomCodeInput.value = room;
+      state.online.roomId = room;
+      if (params.get("join") === "1") {
+        setTimeout(joinOnlineRoom, 650);
+      }
+    }
+
+    els.boardStage.addEventListener("click", (event) => {
+      const square = eventToSquare(event);
+      handleSquareClick(square.r, square.c);
+    });
+
+    document.getElementById("newGameBtn").addEventListener("click", newGame);
+    document.getElementById("undoBtn").addEventListener("click", undoMove);
+    document.getElementById("flipBtn").addEventListener("click", startAsBlackGame);
+    document.getElementById("hintBtn").addEventListener("click", showHint);
+    els.opponentIntentBtn.addEventListener("click", analyzeOpponentIntent);
+    els.ourPlanBtn.addEventListener("click", toggleOurPlan);
+    els.manualModeBtn.addEventListener("click", toggleManualMode);
+    els.soundFxBtn.addEventListener("click", toggleSoundEffects);
+    els.coachSpeechBtn.addEventListener("click", toggleCoachSpeech);
+    els.hostRoomBtn.addEventListener("click", hostOnlineRoom);
+    els.joinRoomBtn.addEventListener("click", joinOnlineRoom);
+    els.copyInviteBtn.addEventListener("click", copyInviteLink);
+    els.disconnectRoomBtn.addEventListener("click", closeOnlineConnection);
+    els.unlockCoachBtn.addEventListener("click", unlockCoachTools);
+    els.coachPasswordInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") unlockCoachTools();
+    });
+    document.getElementById("analyzeBtn").addEventListener("click", analyzeNow);
+    document.getElementById("resumeBtn").addEventListener("click", resumeMatch);
+    els.difficultySelect.addEventListener("change", render);
+    els.styleSelect.addEventListener("change", render);
+    els.coachLevelSelect.value = COACH_LEVEL[state.coachLevel] ? state.coachLevel : "2";
+    state.coachLevel = els.coachLevelSelect.value;
+    els.coachLanguageSelect.value = state.coachLanguage;
+    els.coachVoiceSelect.value = state.coachVoiceStyle;
+    function refreshCoachSettings() {
+      state.coachAdvice = null;
+      state.analysisView = null;
+      state.hintMove = null;
+      state.selected = null;
+      state.selectedMoves = [];
+      render();
+      scheduleAutoOurPlan(80);
+    }
+    els.coachLevelSelect.addEventListener("change", () => {
+      state.coachLevel = els.coachLevelSelect.value;
+      saveTextSetting("xiangqi-pro-coach-level", state.coachLevel);
+      refreshCoachSettings();
+    });
+    els.coachLanguageSelect.addEventListener("change", () => {
+      state.coachLanguage = els.coachLanguageSelect.value;
+      saveTextSetting("xiangqi-pro-coach-language", state.coachLanguage);
+      speakCoach("Coach voice enabled.", true);
+    });
+    els.coachVoiceSelect.addEventListener("change", () => {
+      state.coachVoiceStyle = els.coachVoiceSelect.value;
+      saveTextSetting("xiangqi-pro-coach-voice", state.coachVoiceStyle);
+      speakCoach("Coach voice enabled.", true);
+    });
+
+    document.querySelector(".tabs").addEventListener("click", (event) => {
+      const btn = event.target.closest(".tab-btn");
+      if (btn) setActiveTab(btn.dataset.tab);
+    });
+
+    els.lessonGrid.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-lesson]");
+      if (btn) loadLesson(Number(btn.dataset.lesson));
+    });
+
+    els.bookPanel.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-book]");
+      if (btn) applyBook(Number(btn.dataset.book));
+    });
+
+    initRoomFromUrl();
+    render();
+    scheduleAutoOurPlan();
+  </script>
+</body>
+</html>
