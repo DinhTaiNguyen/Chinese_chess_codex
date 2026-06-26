@@ -1,4 +1,4 @@
-# Đình Tài ♡ Cát Tiên Xiangqi
+# DT ♡ CCT  Xiangqi
 
 A static two-player Chinese chess web app for GitHub Pages.
 
@@ -11,13 +11,13 @@ A static two-player Chinese chess web app for GitHub Pages.
 
 ## Play Together
 
-1. Đình Tài opens the site and clicks `Host`.
+1. DT opens the site and clicks `Host`.
 2. Click the copy button beside the room code.
-3. Send that invite link to Cát Tiên.
-4. Cát Tiên opens the link. Her browser joins as Black automatically.
+3. Send that invite link to CT.
+4. CT opens the link. Her browser joins as Black automatically.
 5. Red moves first. Each legal move syncs to the other browser.
 
-If auto-join does not start, Cát Tiên can paste the room code and click `Join`.
+If auto-join does not start, CT can paste the room code and click `Join`.
 
 ## Private Coach
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đình Tài ♡ Cát Tiên Xiangqi</title>
+  <title> DT ♡ CT Xiangqi</title>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
@@ -1259,7 +1259,7 @@
       <div class="brand">
         <div class="brand-mark">帥</div>
         <div>
-          <h1>Đình Tài ♡ Cát Tiên Xiangqi</h1>
+          <h1>DT ♡ CT  Xiangqi</h1>
           <p>A fast, private board for two hearts and one very serious battlefield.</p>
         </div>
       </div>
@@ -1354,7 +1354,7 @@
 
         <section class="panel active" id="panel-play">
           <div class="panel-header">
-            <h2>Đình Tài vs Cát Tiên</h2>
+            <h2>DT ♡ CT </h2>
             <p>Red hosts, Black joins, and the board keeps both browsers in sync.</p>
           </div>
           <div class="panel-body">
@@ -1375,7 +1375,7 @@
             </div>
 
             <div class="love-note">
-              <strong>Đình Tài ♡ Cát Tiên</strong>
+              <strong>DT ♡ CT </strong>
               <span>Play bravely, forgive blunders softly, and let every rematch be another date.</span>
             </div>
 
@@ -1650,8 +1650,8 @@
 
     const PRIVATE_COACH_PASSWORD = "dinh-tai-cat-tien";
     const PLAYER_NAME = {
-      red: "Đình Tài",
-      black: "Cát Tiên"
+      red: " DT ",
+      black: "CT"
     };
     const ONLINE_PREFIX = "dtct-xiangqi";
 
@@ -4371,7 +4371,7 @@
       state.online.peer = peer;
       peer.on("open", () => {
         setOnlineStatus("Waiting");
-        flashStatus(`Room ${room} is ready for Cát Tiên.`);
+        flashStatus(`Room ${room} is ready for CT.`);
       });
       peer.on("connection", (conn) => {
         if (state.online.conn && state.online.conn.open) {
@@ -4421,7 +4421,7 @@
       conn.on("open", () => {
         state.online.connected = true;
         setOnlineStatus(role === "host" ? "Connected as Red" : "Connected as Black");
-        flashStatus(role === "host" ? "Cát Tiên joined the board." : "Joined Đình Tài's board.");
+        flashStatus(role === "host" ? "CT joined the board." : "Joined DT's board.");
         if (role === "host") {
           sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
         } else {
