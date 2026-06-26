@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Đình Tài ♡ Cát Tiên Xiangqi</title>
+  <title>Cát Tiên ♡ Đình Tài Xiangqi</title>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
@@ -259,32 +259,61 @@
       min-width: 0;
     }
 
-    .intel-strip {
+    .player-strip {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
 
-    .intel-cell {
+    .player-card {
       border-radius: 8px;
       border: 1px solid rgba(255, 244, 212, 0.13);
       background: rgba(23, 17, 13, 0.64);
       padding: 10px 12px;
-      min-height: 62px;
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .player-card.active {
+      border-color: rgba(255, 218, 137, 0.58);
+      background: rgba(220, 168, 77, 0.18);
+      box-shadow: 0 0 24px rgba(220, 168, 77, 0.16);
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
       display: grid;
-      align-content: center;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 244, 212, 0.12);
+      border: 1px solid rgba(255, 244, 212, 0.18);
+      font-size: 26px;
+      flex: 0 0 auto;
+    }
+
+    .player-card span:last-child {
+      display: grid;
       gap: 4px;
+      min-width: 0;
     }
 
-    .intel-cell span {
-      color: rgba(255, 244, 212, 0.6);
-      font-size: 12px;
-    }
-
-    .intel-cell strong {
-      font-size: clamp(16px, 2vw, 22px);
+    .player-card strong {
+      font-size: 15px;
       line-height: 1;
       color: #fff1c0;
+    }
+
+    .player-card em {
+      color: rgba(255, 244, 212, 0.66);
+      font-size: 12px;
+      font-style: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .board-frame {
@@ -894,8 +923,14 @@
 
     .field input::placeholder,
     .room-line input::placeholder,
-    .secret-line input::placeholder {
+    .secret-line input::placeholder,
+    .reward-add input::placeholder {
       color: rgba(255, 244, 212, 0.43);
+    }
+
+    .field .text-btn {
+      width: 100%;
+      height: 40px;
     }
 
     .field select option {
@@ -1190,6 +1225,145 @@
       color: #c3f1d8;
     }
 
+    body.theme-blue-pink .piece.red {
+      color: #1d64b7;
+      border-color: rgba(188, 226, 255, 0.9);
+      background:
+        radial-gradient(circle at 33% 27%, rgba(244, 252, 255, 0.98), rgba(142, 204, 246, 0.92) 38%, rgba(42, 91, 166, 0.92) 100%);
+    }
+
+    body.theme-blue-pink .piece.black {
+      color: #b11e77;
+      border-color: rgba(255, 205, 231, 0.9);
+      background:
+        radial-gradient(circle at 33% 27%, rgba(255, 250, 253, 0.98), rgba(246, 160, 209, 0.92) 38%, rgba(155, 42, 110, 0.9) 100%);
+    }
+
+    body.theme-blue-pink .move-dot,
+    body.theme-blue-pink .hint-dot {
+      background: rgba(48, 126, 214, 0.82);
+      box-shadow: 0 0 20px rgba(48, 126, 214, 0.48);
+    }
+
+    body.theme-blue-pink .capture-dot {
+      border-color: rgba(238, 76, 159, 0.9);
+      box-shadow: 0 0 22px rgba(238, 76, 159, 0.28);
+    }
+
+    .rewards-section {
+      display: grid;
+      gap: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.14);
+      background: rgba(23, 17, 13, 0.68);
+      box-shadow: var(--shadow);
+      padding: clamp(12px, 2vw, 18px);
+    }
+
+    .rewards-summary {
+      color: rgba(255, 244, 212, 0.78);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .reward-panels {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .reward-panel {
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.12);
+      background: rgba(255, 244, 212, 0.07);
+      padding: 13px;
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .reward-panel header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .reward-panel h2 {
+      margin: 0;
+      font-size: 16px;
+      color: #ffe7a7;
+      letter-spacing: 0;
+    }
+
+    .reward-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .reward-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+      gap: 7px;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.11);
+      background: rgba(23, 17, 13, 0.42);
+    }
+
+    .reward-row label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: rgba(255, 244, 212, 0.78);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .reward-row input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--jade);
+      flex: 0 0 auto;
+    }
+
+    .reward-text {
+      overflow-wrap: anywhere;
+    }
+
+    .reward-count {
+      min-width: 34px;
+      text-align: center;
+      color: #fff2bd;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .reward-row .icon-btn {
+      width: 32px;
+      min-height: 32px;
+    }
+
+    .reward-add {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .reward-add input {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.16);
+      background: rgba(255, 244, 212, 0.09);
+      color: var(--ivory);
+      padding: 0 10px;
+      outline: none;
+    }
+
     @media (max-width: 1080px) {
       .topbar {
         grid-template-columns: 1fr;
@@ -1225,9 +1399,13 @@
         padding: 10px;
       }
 
-      .intel-strip,
+      .player-strip,
       .field-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .reward-panels {
+        grid-template-columns: 1fr;
       }
 
       .tabs {
@@ -1247,6 +1425,20 @@
         grid-template-columns: 1fr;
       }
 
+      .player-strip,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .reward-row {
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+      }
+
+      .reward-row .remove-reward {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
+
       .brand p {
         white-space: normal;
       }
@@ -1259,7 +1451,7 @@
       <div class="brand">
         <div class="brand-mark">帥</div>
         <div>
-          <h1>Đình Tài ♡ Cát Tiên Xiangqi</h1>
+          <h1>Cát Tiên ♡ Đình Tài Xiangqi</h1>
           <p>A fast, private board for two hearts and one very serious battlefield.</p>
         </div>
       </div>
@@ -1271,6 +1463,7 @@
 
       <div class="toolbar">
         <button class="icon-btn" id="newGameBtn" title="New game" aria-label="New game"><i data-lucide="sparkles"></i></button>
+        <button class="text-btn offline-only" id="startBlackBtn" title="New game as Black"><i data-lucide="moon"></i>New Black</button>
         <button class="icon-btn" id="undoBtn" title="Undo move" aria-label="Undo move"><i data-lucide="undo-2"></i></button>
         <button class="icon-btn offline-only" id="flipBtn" title="Start as Black" aria-label="Start new game as Black"><i data-lucide="rotate-cw"></i></button>
         <button class="icon-btn coach-unlocked-only" id="hintBtn" title="Coach hint" aria-label="Coach hint"><i data-lucide="lightbulb"></i></button>
@@ -1285,11 +1478,15 @@
 
     <main class="main-grid">
       <section class="board-column">
-        <div class="intel-strip">
-          <div class="intel-cell"><span>Evaluation</span><strong id="evalScore">0.00</strong></div>
-          <div class="intel-cell"><span>Phase</span><strong id="phaseLabel">Opening</strong></div>
-          <div class="intel-cell"><span>Pressure</span><strong id="pressureLabel">Center</strong></div>
-          <div class="intel-cell"><span>AI</span><strong id="aiLabel">Dragon</strong></div>
+        <div class="player-strip">
+          <div class="player-card red-player" id="redPlayerCard">
+            <span class="avatar" aria-hidden="true">🐶</span>
+            <span><strong>Host</strong><em>Đình Tài · Red</em></span>
+          </div>
+          <div class="player-card black-player" id="blackPlayerCard">
+            <span class="avatar" aria-hidden="true">🐼</span>
+            <span><strong>Guest</strong><em>Cát Tiên · Black</em></span>
+          </div>
         </div>
 
         <div class="board-frame">
@@ -1354,7 +1551,7 @@
 
         <section class="panel active" id="panel-play">
           <div class="panel-header">
-            <h2>Đình Tài vs Cát Tiên</h2>
+            <h2>Cát Tiên ♡ Đình Tài</h2>
             <p>Red hosts, Black joins, and the board keeps both browsers in sync.</p>
           </div>
           <div class="panel-body">
@@ -1364,7 +1561,7 @@
                 <span class="connection-pill" id="connectionStatus">Offline</span>
               </header>
               <div class="room-line">
-                <input id="roomCodeInput" type="text" inputmode="latin" autocomplete="off" spellcheck="false" placeholder="room code" />
+                <input id="roomCodeInput" type="text" inputmode="latin" autocomplete="off" spellcheck="false" placeholder="cattiendinhtai" />
                 <button class="icon-btn" id="copyInviteBtn" title="Copy invite link" aria-label="Copy invite link"><i data-lucide="copy"></i></button>
               </div>
               <div class="room-actions">
@@ -1375,11 +1572,30 @@
             </div>
 
             <div class="love-note">
-              <strong>Đình Tài ♡ Cát Tiên</strong>
+              <strong>Cát Tiên ♡ Đình Tài</strong>
               <span>Play bravely, forgive blunders softly, and let every rematch be another date.</span>
             </div>
 
             <div class="field-grid">
+              <div class="field">
+                <label for="themeSelect">Board Colors</label>
+                <select id="themeSelect">
+                  <option value="classic" selected>Red and black</option>
+                  <option value="blue-pink">Blue and pink</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="musicSelect">Funny Music</label>
+                <select id="musicSelect">
+                  <option value="kalimba" selected>Kalimba date song</option>
+                  <option value="flute">Flute noodle shop</option>
+                  <option value="pluck">Plucky arcade</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="musicToggleBtn">Music Toggle</label>
+                <button class="text-btn" id="musicToggleBtn" type="button"><i data-lucide="music"></i>Music Off</button>
+              </div>
               <div class="field offline-only">
                 <label for="difficultySelect">Strength</label>
                 <select id="difficultySelect">
@@ -1403,6 +1619,15 @@
                 <select id="coachLevelSelect">
                   <option value="1">Smart 1 quick plan</option>
                   <option value="2" selected>Smart 2 strategy coach</option>
+                </select>
+              </div>
+              <div class="field coach-unlocked-only">
+                <label for="coachStyleSelect">Coach Style</label>
+                <select id="coachStyleSelect">
+                  <option value="normal" selected>Balanced plan</option>
+                  <option value="attacking">Attack first</option>
+                  <option value="defensive">Protect first</option>
+                  <option value="unique">Creative surprise</option>
                 </select>
               </div>
               <div class="field coach-unlocked-only">
@@ -1492,6 +1717,37 @@
         </section>
       </aside>
     </main>
+
+    <section class="rewards-section">
+      <div class="rewards-summary" id="rewardSummary">
+        Finish a match, then choose the promises you want to collect.
+      </div>
+      <div class="reward-panels">
+        <div class="reward-panel">
+          <header>
+            <h2>Winner Rewards: Promises for when you meet!</h2>
+            <span class="badge" id="winnerRewardTotal">0 saved</span>
+          </header>
+          <div class="reward-list" id="winnerRewardList"></div>
+          <div class="reward-add">
+            <input id="winnerRewardInput" type="text" placeholder="add a winner reward" />
+            <button class="icon-btn" id="addWinnerRewardBtn" aria-label="Add winner reward"><i data-lucide="plus"></i></button>
+          </div>
+        </div>
+
+        <div class="reward-panel">
+          <header>
+            <h2>Loser Rewards:</h2>
+            <span class="badge" id="loserRewardTotal">0 saved</span>
+          </header>
+          <div class="reward-list" id="loserRewardList"></div>
+          <div class="reward-add">
+            <input id="loserRewardInput" type="text" placeholder="add a loser reward" />
+            <button class="icon-btn" id="addLoserRewardBtn" aria-label="Add loser reward"><i data-lucide="plus"></i></button>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -1648,12 +1904,50 @@
       [0, -1]
     ];
 
-    const PRIVATE_COACH_PASSWORD = "dinh-tai-cat-tien";
+    const PRIVATE_COACH_PASSWORD = "123";
+    const DEFAULT_ROOM_CODE = "cattiendinhtai";
     const PLAYER_NAME = {
       red: "Đình Tài",
       black: "Cát Tiên"
     };
-    const ONLINE_PREFIX = "dtct-xiangqi";
+    const ONLINE_PREFIX = DEFAULT_ROOM_CODE;
+    const DEFAULT_REWARDS = {
+      winner: [
+        "Loser has to hug the winner on our date!",
+        "Loser has to hold the winner's hand on our date!",
+        "Loser has to kiss the winner on our date!",
+        "Loser gets to pick our first date dessert!",
+        "Loser sends a sweet good-morning message the next day"
+      ],
+      loser: [
+        "Winner has to give 2 compliments to the loser",
+        "Winner sends a sweet voice note singing or saying something nice",
+        "Winner gets to pick the next game",
+        "Winner sings a song on the call",
+        "Winner plans a fun activity for the next call",
+        "Winner sends a sweet good-morning message the next day"
+      ]
+    };
+    const MUSIC_SONGS = {
+      kalimba: {
+        label: "Kalimba date song",
+        wave: "sine",
+        gain: 0.035,
+        notes: [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46]
+      },
+      flute: {
+        label: "Flute noodle shop",
+        wave: "triangle",
+        gain: 0.026,
+        notes: [392, 440, 523.25, 587.33, 523.25, 440, 392, 329.63]
+      },
+      pluck: {
+        label: "Plucky arcade",
+        wave: "square",
+        gain: 0.018,
+        notes: [329.63, 493.88, 659.25, 739.99, 659.25, 493.88, 392, 493.88]
+      }
+    };
 
     const state = {
       board: createInitialBoard(),
@@ -1666,6 +1960,7 @@
       captured: { red: [], black: [] },
       flipped: false,
       gameOver: false,
+      winnerColor: null,
       aiThinking: false,
       lastMove: null,
       training: null,
@@ -1683,6 +1978,12 @@
       coachLanguage: readTextSetting("xiangqi-pro-coach-language", "en-US"),
       coachVoiceStyle: readTextSetting("xiangqi-pro-coach-voice", "auto"),
       coachLevel: readTextSetting("xiangqi-pro-coach-level", "2"),
+      coachStyle: readTextSetting("xiangqi-pro-coach-style", "normal"),
+      theme: readTextSetting("dtct-xiangqi-theme", "classic"),
+      musicEnabled: false,
+      musicSong: readTextSetting("dtct-xiangqi-music-song", "kalimba"),
+      rewards: readRewards(),
+      rewardRoundClaims: {},
       online: {
         peer: null,
         conn: null,
@@ -1695,6 +1996,8 @@
     };
 
     let audioCtx = null;
+    let musicTimer = null;
+    let musicStep = 0;
     let autoPlanTimer = null;
     let ourPlanRequestId = 0;
     let activeOurPlanRequestId = 0;
@@ -1705,7 +2008,10 @@
       coach: null,
       history: null,
       captured: null,
-      buttons: null
+      buttons: null,
+      players: null,
+      rewards: null,
+      music: null
     };
     let iconsDirty = true;
 
@@ -1718,10 +2024,8 @@
       heatLayer: document.getElementById("heatLayer"),
       turnStatus: document.getElementById("turnStatus"),
       gameStatus: document.getElementById("gameStatus"),
-      evalScore: document.getElementById("evalScore"),
-      phaseLabel: document.getElementById("phaseLabel"),
-      pressureLabel: document.getElementById("pressureLabel"),
-      aiLabel: document.getElementById("aiLabel"),
+      redPlayerCard: document.getElementById("redPlayerCard"),
+      blackPlayerCard: document.getElementById("blackPlayerCard"),
       coachList: document.getElementById("coachList"),
       reviewList: document.getElementById("reviewList"),
       historyList: document.getElementById("historyList"),
@@ -1734,8 +2038,12 @@
       difficultySelect: document.getElementById("difficultySelect"),
       styleSelect: document.getElementById("styleSelect"),
       coachLevelSelect: document.getElementById("coachLevelSelect"),
+      coachStyleSelect: document.getElementById("coachStyleSelect"),
       coachLanguageSelect: document.getElementById("coachLanguageSelect"),
       coachVoiceSelect: document.getElementById("coachVoiceSelect"),
+      themeSelect: document.getElementById("themeSelect"),
+      musicSelect: document.getElementById("musicSelect"),
+      musicToggleBtn: document.getElementById("musicToggleBtn"),
       roomCodeInput: document.getElementById("roomCodeInput"),
       connectionStatus: document.getElementById("connectionStatus"),
       hostRoomBtn: document.getElementById("hostRoomBtn"),
@@ -1748,7 +2056,16 @@
       ourPlanBtn: document.getElementById("ourPlanBtn"),
       manualModeBtn: document.getElementById("manualModeBtn"),
       soundFxBtn: document.getElementById("soundFxBtn"),
-      coachSpeechBtn: document.getElementById("coachSpeechBtn")
+      coachSpeechBtn: document.getElementById("coachSpeechBtn"),
+      rewardSummary: document.getElementById("rewardSummary"),
+      winnerRewardList: document.getElementById("winnerRewardList"),
+      loserRewardList: document.getElementById("loserRewardList"),
+      winnerRewardInput: document.getElementById("winnerRewardInput"),
+      loserRewardInput: document.getElementById("loserRewardInput"),
+      addWinnerRewardBtn: document.getElementById("addWinnerRewardBtn"),
+      addLoserRewardBtn: document.getElementById("addLoserRewardBtn"),
+      winnerRewardTotal: document.getElementById("winnerRewardTotal"),
+      loserRewardTotal: document.getElementById("loserRewardTotal")
     };
 
     const TRAINING = [
@@ -2708,13 +3025,14 @@
     function getCoachProfile(levelKey) {
       const selectedLevel = String(levelKey || state.coachLevel || "2");
       const level = COACH_LEVEL[selectedLevel] || COACH_LEVEL["2"];
-      const styles = uniqueStyleKeys(level.styles || ["normal"]);
-      const primary = STYLE[level.primary] ? level.primary : styles[0] || "normal";
+      const selectedStyle = els.coachStyleSelect ? els.coachStyleSelect.value : state.coachStyle;
+      const primary = STYLE[selectedStyle] ? selectedStyle : STYLE[level.primary] ? level.primary : "normal";
+      const styles = uniqueStyleKeys([primary, ...(level.styles || ["normal"])]);
       const strategy = {
-        label: level.modeLabel,
+        label: `${STYLE[primary].label} ${level.modeLabel}`,
         primary,
         styles,
-        goal: level.goal
+        goal: `${STYLE[primary].goal}; ${level.goal}`
       };
       return {
         levelKey: COACH_LEVEL[selectedLevel] ? selectedLevel : "2",
@@ -3248,12 +3566,15 @@
       renderHints();
       renderHeat();
       renderStatus();
+      renderPlayers();
       renderCoach();
       renderHistory();
       renderCaptured();
+      renderRewards();
       renderTraining();
       const bookChanged = renderBook();
       const buttonsChanged = renderAudioButtons();
+      renderMusicControls();
       if (window.lucide && (iconsDirty || bookChanged || buttonsChanged)) {
         window.lucide.createIcons();
         iconsDirty = false;
@@ -3264,6 +3585,7 @@
       document.body.classList.toggle("coach-unlocked", state.coachUnlocked);
       document.body.classList.toggle("online-mode", Boolean(state.online.role || state.online.connected));
       document.body.classList.toggle("online-connected", state.online.connected);
+      document.body.classList.toggle("theme-blue-pink", state.theme === "blue-pink");
       if (!state.coachUnlocked) setActiveTab("play", { silent: true });
     }
 
@@ -3306,6 +3628,8 @@
           div.type = "button";
           div.textContent = GLYPH[p.color][p.type];
           div.title = `${p.color} ${NAME[p.type]}`;
+          div.dataset.square = `${r}-${c}`;
+          div.dataset.piece = `${p.color}-${p.type}`;
           div.addEventListener("click", (event) => {
             event.stopPropagation();
             handleSquareClick(r, c);
@@ -3463,8 +3787,6 @@
     function renderStatus() {
       const side = state.sideToMove === RED ? "Red" : "Black";
       const inCheck = isInCheck(state.board, state.sideToMove);
-      const cfg = DIFFICULTY[els.difficultySelect.value] || DIFFICULTY.emperor;
-      els.aiLabel.textContent = state.online.connected ? "Online" : state.aiEnabled ? cfg.label : "Manual";
       els.connectionStatus.textContent = state.online.status;
       els.turnStatus.textContent = state.gameOver
         ? "Game finished"
@@ -3496,11 +3818,18 @@
       }
 
       const evalRed = evaluateBoard(state.board, RED, els.styleSelect.value) / 100;
-      els.evalScore.textContent = `${evalRed >= 0 ? "+" : ""}${evalRed.toFixed(2)}`;
       const meter = Math.max(4, Math.min(96, 50 + evalRed * 7));
       els.evalMeter.style.width = `${meter}%`;
-      els.phaseLabel.textContent = phaseLabel(state.board);
-      els.pressureLabel.textContent = pressureLabel(state.board);
+    }
+
+    function renderPlayers() {
+      const signature = `${state.sideToMove}|${state.playerColor}|${state.online.role}|${state.online.connected}|${state.winnerColor || ""}`;
+      if (renderCache.players === signature) return;
+      renderCache.players = signature;
+      els.redPlayerCard.classList.toggle("active", state.sideToMove === RED && !state.gameOver);
+      els.blackPlayerCard.classList.toggle("active", state.sideToMove === BLACK && !state.gameOver);
+      els.redPlayerCard.querySelector("em").textContent = `${PLAYER_NAME.red} · Red${state.online.role === "host" ? " · you" : ""}`;
+      els.blackPlayerCard.querySelector("em").textContent = `${PLAYER_NAME.black} · Black${state.online.role === "guest" ? " · you" : ""}`;
     }
 
     function phaseLabel(board) {
@@ -3776,6 +4105,100 @@
       }
     }
 
+    function renderMusicControls() {
+      const signature = `${state.musicEnabled}|${state.musicSong}`;
+      if (renderCache.music === signature) return;
+      renderCache.music = signature;
+      els.musicSelect.value = MUSIC_SONGS[state.musicSong] ? state.musicSong : "kalimba";
+      const icon = state.musicEnabled ? "music-2" : "music";
+      els.musicToggleBtn.innerHTML = `<i data-lucide="${icon}"></i>${state.musicEnabled ? "Music On" : "Music Off"}`;
+      els.musicToggleBtn.classList.toggle("active", state.musicEnabled);
+      iconsDirty = true;
+    }
+
+    function playMusicNote(freq, song) {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+      const start = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = song.wave;
+      osc.frequency.setValueAtTime(freq, start);
+      amp.gain.setValueAtTime(0.001, start);
+      amp.gain.exponentialRampToValueAtTime(song.gain, start + 0.02);
+      amp.gain.exponentialRampToValueAtTime(0.001, start + 0.34);
+      osc.connect(amp).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.38);
+    }
+
+    function startFunnyMusic(options = {}) {
+      stopFunnyMusic({ save: false, broadcast: false });
+      state.musicEnabled = true;
+      saveBooleanSetting("dtct-xiangqi-music-enabled", true);
+      const song = MUSIC_SONGS[state.musicSong] || MUSIC_SONGS.kalimba;
+      musicStep = 0;
+      playMusicNote(song.notes[musicStep], song);
+      musicTimer = setInterval(() => {
+        const activeSong = MUSIC_SONGS[state.musicSong] || MUSIC_SONGS.kalimba;
+        musicStep = (musicStep + 1) % activeSong.notes.length;
+        playMusicNote(activeSong.notes[musicStep], activeSong);
+      }, 420);
+      if (options.broadcast !== false) broadcastMusicState();
+      renderMusicControls();
+      render();
+    }
+
+    function stopFunnyMusic(options = {}) {
+      clearInterval(musicTimer);
+      musicTimer = null;
+      if (options.save !== false) {
+        state.musicEnabled = false;
+        saveBooleanSetting("dtct-xiangqi-music-enabled", false);
+      }
+      if (options.broadcast !== false) broadcastMusicState();
+      renderMusicControls();
+    }
+
+    function toggleFunnyMusic() {
+      if (state.musicEnabled) {
+        stopFunnyMusic();
+      } else {
+        startFunnyMusic();
+      }
+      render();
+    }
+
+    function changeMusicSong() {
+      state.musicSong = MUSIC_SONGS[els.musicSelect.value] ? els.musicSelect.value : "kalimba";
+      saveTextSetting("dtct-xiangqi-music-song", state.musicSong);
+      if (state.musicEnabled) startFunnyMusic();
+      broadcastMusicState();
+      render();
+    }
+
+    function broadcastMusicState() {
+      sendOnlineMessage({
+        type: "music",
+        music: {
+          enabled: state.musicEnabled,
+          song: state.musicSong
+        }
+      });
+    }
+
+    function applyRemoteMusic(music) {
+      if (!music) return;
+      state.musicSong = MUSIC_SONGS[music.song] ? music.song : "kalimba";
+      saveTextSetting("dtct-xiangqi-music-song", state.musicSong);
+      if (music.enabled) {
+        startFunnyMusic({ broadcast: false });
+      } else {
+        stopFunnyMusic({ broadcast: false });
+      }
+      render();
+    }
+
     function stripHtml(text) {
       const div = document.createElement("div");
       div.innerHTML = text;
@@ -3975,11 +4398,13 @@
         const loser = state.sideToMove === RED ? "Red" : "Black";
         const winner = state.sideToMove === RED ? "Black" : "Red";
         state.gameOver = true;
+        state.winnerColor = state.sideToMove === RED ? BLACK : RED;
         const reason = missingKing || isInCheck(state.board, state.sideToMove) ? "checkmate" : "no legal move";
-        flashStatus(`${winner} wins by ${reason}.`);
+        flashStatus(`${playerLabel(state.winnerColor)} wins by ${reason}.`);
         return;
       }
       state.gameOver = false;
+      state.winnerColor = null;
     }
 
     function queueAiMove() {
@@ -4032,6 +4457,8 @@
       state.history = [];
       state.captured = { red: [], black: [] };
       state.gameOver = false;
+      state.winnerColor = null;
+      state.rewardRoundClaims = {};
       state.aiThinking = false;
       if (state.online.role) state.aiEnabled = false;
       state.lastMove = null;
@@ -4088,6 +4515,7 @@
       state.captured = prev.captured;
       state.lastMove = prev.lastMove;
       state.gameOver = false;
+      state.winnerColor = null;
       state.selected = null;
       state.selectedMoves = [];
       state.hintMove = null;
@@ -4227,6 +4655,176 @@
       localStorage.setItem("xiangqi-pro-progress", JSON.stringify(state.progress));
     }
 
+    function makeRewardId(kind, index) {
+      return `${kind}-${Date.now().toString(36)}-${index}-${Math.random().toString(36).slice(2, 7)}`;
+    }
+
+    function defaultRewardRows(kind) {
+      return DEFAULT_REWARDS[kind].map((text, index) => ({
+        id: `${kind}-default-${index}`,
+        text,
+        count: 0
+      }));
+    }
+
+    function readRewards() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("dtct-xiangqi-rewards") || "null");
+        if (saved && Array.isArray(saved.winner) && Array.isArray(saved.loser)) {
+          return {
+            winner: saved.winner.map(normalizeRewardRow),
+            loser: saved.loser.map(normalizeRewardRow)
+          };
+        }
+      } catch {
+        // A broken saved ledger should not stop the game from loading.
+      }
+      return {
+        winner: defaultRewardRows("winner"),
+        loser: defaultRewardRows("loser")
+      };
+    }
+
+    function normalizeRewardRow(row, index = 0) {
+      return {
+        id: row.id || makeRewardId("custom", index),
+        text: String(row.text || "").trim() || "Sweet promise",
+        count: Math.max(0, Number(row.count) || 0)
+      };
+    }
+
+    function saveRewards() {
+      try {
+        localStorage.setItem("dtct-xiangqi-rewards", JSON.stringify(state.rewards));
+      } catch {
+        // Local saving is best effort.
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderRewardRows(kind) {
+      const claims = state.rewardRoundClaims || {};
+      return state.rewards[kind].map((item) => {
+        const checked = claims[item.id] ? "checked" : "";
+        return `
+          <div class="reward-row" data-reward-kind="${kind}" data-reward-id="${item.id}">
+            <label>
+              <input type="checkbox" data-reward-action="claim" ${checked} />
+              <span class="reward-text">${escapeHtml(item.text)}</span>
+            </label>
+            <span class="reward-count">${item.count}</span>
+            <button class="icon-btn" data-reward-action="dec" aria-label="Reduce reward count"><i data-lucide="minus"></i></button>
+            <button class="icon-btn" data-reward-action="inc" aria-label="Increase reward count"><i data-lucide="plus"></i></button>
+            <button class="icon-btn remove-reward" data-reward-action="remove" aria-label="Remove reward"><i data-lucide="trash-2"></i></button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderRewards() {
+      const summary = state.winnerColor
+        ? `${playerLabel(state.winnerColor)} won. Winner can tick a Winner Reward, and ${playerLabel(other(state.winnerColor))} can still collect a Loser Reward.`
+        : "Finish a match, then choose the promises you want to collect.";
+      const winnerTotal = state.rewards.winner.reduce((sum, item) => sum + item.count, 0);
+      const loserTotal = state.rewards.loser.reduce((sum, item) => sum + item.count, 0);
+      const signature = JSON.stringify({
+        rewards: state.rewards,
+        claims: state.rewardRoundClaims,
+        winner: state.winnerColor
+      });
+      if (renderCache.rewards === signature) return;
+      renderCache.rewards = signature;
+      els.rewardSummary.textContent = summary;
+      els.winnerRewardTotal.textContent = `${winnerTotal} saved`;
+      els.loserRewardTotal.textContent = `${loserTotal} saved`;
+      els.winnerRewardList.innerHTML = renderRewardRows("winner");
+      els.loserRewardList.innerHTML = renderRewardRows("loser");
+      iconsDirty = true;
+    }
+
+    function findReward(kind, id) {
+      return state.rewards[kind].find((item) => item.id === id);
+    }
+
+    function adjustReward(kind, id, delta) {
+      const reward = findReward(kind, id);
+      if (!reward) return;
+      reward.count = Math.max(0, reward.count + delta);
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+    }
+
+    function claimReward(kind, id, checked) {
+      const reward = findReward(kind, id);
+      if (!reward) return;
+      state.rewardRoundClaims = state.rewardRoundClaims || {};
+      const alreadyClaimed = Boolean(state.rewardRoundClaims[id]);
+      if (checked && !alreadyClaimed) {
+        state.rewardRoundClaims[id] = true;
+        reward.count += 1;
+      } else if (!checked && alreadyClaimed) {
+        delete state.rewardRoundClaims[id];
+        reward.count = Math.max(0, reward.count - 1);
+      }
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+    }
+
+    function addReward(kind) {
+      const input = kind === "winner" ? els.winnerRewardInput : els.loserRewardInput;
+      const text = input.value.trim();
+      if (!text) {
+        playSound("invalid");
+        return;
+      }
+      state.rewards[kind].push({
+        id: makeRewardId(kind, state.rewards[kind].length),
+        text,
+        count: 0
+      });
+      input.value = "";
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+    }
+
+    function removeReward(kind, id) {
+      state.rewards[kind] = state.rewards[kind].filter((item) => item.id !== id);
+      delete state.rewardRoundClaims[id];
+      saveRewards();
+      renderCache.rewards = null;
+      render();
+    }
+
+    function handleRewardAction(event) {
+      const actionTarget = event.target.closest("[data-reward-action]");
+      if (!actionTarget) return;
+      const row = event.target.closest("[data-reward-kind][data-reward-id]");
+      if (!row) return;
+      const kind = row.dataset.rewardKind;
+      const id = row.dataset.rewardId;
+      const action = actionTarget.dataset.rewardAction;
+      if (action === "claim") {
+        claimReward(kind, id, actionTarget.checked);
+      } else if (action === "inc") {
+        adjustReward(kind, id, 1);
+      } else if (action === "dec") {
+        adjustReward(kind, id, -1);
+      } else if (action === "remove") {
+        removeReward(kind, id);
+      }
+    }
+
     function readBooleanSetting(key, fallback) {
       try {
         const value = localStorage.getItem(key);
@@ -4298,8 +4896,7 @@
     }
 
     function createRoomCode() {
-      const token = Math.random().toString(36).slice(2, 8);
-      return `${ONLINE_PREFIX}-${token}`;
+      return DEFAULT_ROOM_CODE;
     }
 
     function ensureRoomCode() {
@@ -4424,6 +5021,7 @@
         flashStatus(role === "host" ? "Cát Tiên joined the board." : "Joined Đình Tài's board.");
         if (role === "host") {
           sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
+          broadcastMusicState();
         } else {
           sendOnlineMessage({ type: "hello", name: localPlayerLabel() });
         }
@@ -4460,6 +5058,7 @@
       }
       if (message.type === "hello" && state.online.role === "host") {
         sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
+        broadcastMusicState();
         return;
       }
       if (message.type === "snapshot") {
@@ -4476,6 +5075,10 @@
       }
       if (message.type === "undo") {
         undoMove({ broadcast: false });
+        return;
+      }
+      if (message.type === "music") {
+        applyRemoteMusic(message.music);
       }
     }
 
@@ -4552,7 +5155,8 @@
         captured: serializeCaptured(state.captured),
         lastMove: serializeMove(state.lastMove),
         history: serializeHistory(state.history),
-        gameOver: state.gameOver
+        gameOver: state.gameOver,
+        winnerColor: state.winnerColor
       };
     }
 
@@ -4564,6 +5168,7 @@
       state.lastMove = deserializeMove(snapshot.lastMove);
       state.history = deserializeHistory(snapshot.history);
       state.gameOver = Boolean(snapshot.gameOver);
+      state.winnerColor = snapshot.winnerColor || null;
       state.playerColor = state.online.role === "guest" ? BLACK : RED;
       state.aiColor = other(state.playerColor);
       state.flipped = state.playerColor === BLACK;
@@ -4656,6 +5261,7 @@
     });
 
     document.getElementById("newGameBtn").addEventListener("click", newGame);
+    document.getElementById("startBlackBtn").addEventListener("click", startAsBlackGame);
     document.getElementById("undoBtn").addEventListener("click", undoMove);
     document.getElementById("flipBtn").addEventListener("click", startAsBlackGame);
     document.getElementById("hintBtn").addEventListener("click", showHint);
@@ -4669,17 +5275,40 @@
     els.copyInviteBtn.addEventListener("click", copyInviteLink);
     els.disconnectRoomBtn.addEventListener("click", closeOnlineConnection);
     els.unlockCoachBtn.addEventListener("click", unlockCoachTools);
+    els.themeSelect.addEventListener("change", () => {
+      state.theme = els.themeSelect.value === "blue-pink" ? "blue-pink" : "classic";
+      saveTextSetting("dtct-xiangqi-theme", state.theme);
+      render();
+    });
+    els.musicSelect.addEventListener("change", changeMusicSong);
+    els.musicToggleBtn.addEventListener("click", toggleFunnyMusic);
     els.coachPasswordInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") unlockCoachTools();
     });
+    els.addWinnerRewardBtn.addEventListener("click", () => addReward("winner"));
+    els.addLoserRewardBtn.addEventListener("click", () => addReward("loser"));
+    els.winnerRewardInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addReward("winner");
+    });
+    els.loserRewardInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addReward("loser");
+    });
+    els.winnerRewardList.addEventListener("click", handleRewardAction);
+    els.winnerRewardList.addEventListener("change", handleRewardAction);
+    els.loserRewardList.addEventListener("click", handleRewardAction);
+    els.loserRewardList.addEventListener("change", handleRewardAction);
     document.getElementById("analyzeBtn").addEventListener("click", analyzeNow);
     document.getElementById("resumeBtn").addEventListener("click", resumeMatch);
     els.difficultySelect.addEventListener("change", render);
     els.styleSelect.addEventListener("change", render);
     els.coachLevelSelect.value = COACH_LEVEL[state.coachLevel] ? state.coachLevel : "2";
     state.coachLevel = els.coachLevelSelect.value;
+    els.coachStyleSelect.value = STYLE[state.coachStyle] ? state.coachStyle : "normal";
+    state.coachStyle = els.coachStyleSelect.value;
     els.coachLanguageSelect.value = state.coachLanguage;
     els.coachVoiceSelect.value = state.coachVoiceStyle;
+    els.themeSelect.value = state.theme === "blue-pink" ? "blue-pink" : "classic";
+    els.musicSelect.value = MUSIC_SONGS[state.musicSong] ? state.musicSong : "kalimba";
     function refreshCoachSettings() {
       state.coachAdvice = null;
       state.analysisView = null;
@@ -4692,6 +5321,11 @@
     els.coachLevelSelect.addEventListener("change", () => {
       state.coachLevel = els.coachLevelSelect.value;
       saveTextSetting("xiangqi-pro-coach-level", state.coachLevel);
+      refreshCoachSettings();
+    });
+    els.coachStyleSelect.addEventListener("change", () => {
+      state.coachStyle = STYLE[els.coachStyleSelect.value] ? els.coachStyleSelect.value : "normal";
+      saveTextSetting("xiangqi-pro-coach-style", state.coachStyle);
       refreshCoachSettings();
     });
     els.coachLanguageSelect.addEventListener("change", () => {

@@ -1,4 +1,4 @@
-# Đình Tài ♡ Cát Tiên Xiangqi
+# Cát Tiên ♡ Đình Tài Xiangqi
 
 A static two-player Chinese chess web app for GitHub Pages.
 
@@ -17,6 +17,12 @@ A static two-player Chinese chess web app for GitHub Pages.
 4. Cát Tiên opens the link. Her browser joins as Black automatically.
 5. Red moves first. Each legal move syncs to the other browser.
 
+The default room code is:
+
+```text
+cattiendinhtai
+```
+
 If auto-join does not start, Cát Tiên can paste the room code and click `Join`.
 
 ## Private Coach
@@ -24,9 +30,9 @@ If auto-join does not start, Cát Tiên can paste the room code and click `Join`
 The coach is hidden until unlocked on the local browser. The default password is:
 
 ```text
-dinh-tai-cat-tien
+123
 ```
 
-After unlocking, the coach offers only two levels: `Smart 1 quick plan` and `Smart 2 strategy coach`.
+After unlocking, the coach offers only two levels, plus selectable styles: balanced, attack, protect, and creative.
 
 This is a friendly client-side lock, not cryptographic security. Anyone who inspects the static source can find or change the password.
