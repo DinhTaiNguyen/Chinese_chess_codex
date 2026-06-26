@@ -23,9 +23,7 @@ If auto-join does not start, CT can paste the room code and click `Join`.
 
 The coach is hidden until unlocked on the local browser. The default password is:
 
-```text
-dinh-tai-cat-tien
-```
+
 
 After unlocking, the coach offers only two levels: `Smart 1 quick plan` and `Smart 2 strategy coach`.
 
