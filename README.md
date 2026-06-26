@@ -43,6 +43,8 @@ Winner and loser rewards save in the browser forever. Each reward tracks separat
 
 When both players are online, reward changes sync live between browsers. Each reward panel also has a `Sync` button that manually sends the latest reward table to the other player.
 
+Offline reward edits auto-save on the current browser too, so reopening the same deployed site keeps the added rewards and counts. Use `Save` to force a local save, `Backup` to download the reward ledger as a JSON file, and `Restore` to bring that saved ledger into another browser/device.
+
 When a game finishes, a board popup cheers the winner, encourages the loser, shows a random love quote, plays a short love sound effect when sound is enabled, and gives direct buttons to the winner and loser reward panels. It can be minimized or closed.
 
 `Redo` becomes active after `Undo`, so a mistaken undo can be restored.

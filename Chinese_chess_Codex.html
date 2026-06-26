@@ -1442,6 +1442,41 @@
       line-height: 1.45;
     }
 
+    .reward-storage-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 244, 212, 0.11);
+      background: rgba(255, 244, 212, 0.055);
+    }
+
+    .reward-save-state {
+      color: rgba(255, 244, 212, 0.66);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .reward-save-state.warn {
+      color: #ffd08f;
+    }
+
+    .reward-storage-buttons {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .reward-storage-buttons .text-btn {
+      min-height: 34px;
+      padding: 0 10px;
+    }
+
     .reward-panels {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1615,6 +1650,19 @@
 
       .reward-panels {
         grid-template-columns: 1fr;
+      }
+
+      .reward-storage-tools,
+      .reward-storage-buttons {
+        align-items: stretch;
+      }
+
+      .reward-storage-tools {
+        display: grid;
+      }
+
+      .reward-storage-buttons .text-btn {
+        flex: 1 1 96px;
       }
 
       .summary-grid {
@@ -1940,6 +1988,15 @@
       <div class="rewards-summary" id="rewardSummary">
         Finish a match, then choose the promises you want to collect.
       </div>
+      <div class="reward-storage-tools">
+        <span class="reward-save-state" id="rewardSaveState">Rewards auto-save on this device.</span>
+        <div class="reward-storage-buttons">
+          <button class="text-btn" id="saveRewardsBtn" type="button"><i data-lucide="save"></i>Save</button>
+          <button class="text-btn" id="backupRewardsBtn" type="button"><i data-lucide="download"></i>Backup</button>
+          <button class="text-btn" id="restoreRewardsBtn" type="button"><i data-lucide="upload"></i>Restore</button>
+        </div>
+        <input id="rewardImportFile" type="file" accept="application/json" hidden />
+      </div>
       <div class="reward-panels">
         <div class="reward-panel">
           <header>
@@ -2142,6 +2199,9 @@
 
     const PRIVATE_COACH_PASSWORD = "123";
     const DEFAULT_ROOM_CODE = "cattiendinhtai";
+    const REWARD_STORAGE_KEY = "dtct-xiangqi-rewards";
+    const REWARD_BACKUP_KEY = "dtct-xiangqi-rewards-backup";
+    const REWARD_SAVED_AT_KEY = "dtct-xiangqi-rewards-saved-at";
     const PLAYER_NAME = {
       red: "Đình Tài",
       black: "Cát Tiên"
@@ -2309,6 +2369,11 @@
       soundFxBtn: document.getElementById("soundFxBtn"),
       coachSpeechBtn: document.getElementById("coachSpeechBtn"),
       rewardSummary: document.getElementById("rewardSummary"),
+      rewardSaveState: document.getElementById("rewardSaveState"),
+      saveRewardsBtn: document.getElementById("saveRewardsBtn"),
+      backupRewardsBtn: document.getElementById("backupRewardsBtn"),
+      restoreRewardsBtn: document.getElementById("restoreRewardsBtn"),
+      rewardImportFile: document.getElementById("rewardImportFile"),
       winnerRewardList: document.getElementById("winnerRewardList"),
       loserRewardList: document.getElementById("loserRewardList"),
       winnerRewardInput: document.getElementById("winnerRewardInput"),
@@ -5110,18 +5175,30 @@
       }));
     }
 
-    function readRewards() {
+    function normalizeRewardsLedger(value) {
+      const ledger = value && value.rewards && typeof value.rewards === "object"
+        ? value.rewards
+        : value;
+      if (!ledger || !Array.isArray(ledger.winner) || !Array.isArray(ledger.loser)) return null;
+      return {
+        winner: ledger.winner.map(normalizeRewardRow),
+        loser: ledger.loser.map(normalizeRewardRow)
+      };
+    }
+
+    function readStoredRewards(key) {
       try {
-        const saved = JSON.parse(localStorage.getItem("dtct-xiangqi-rewards") || "null");
-        if (saved && Array.isArray(saved.winner) && Array.isArray(saved.loser)) {
-          return {
-            winner: saved.winner.map(normalizeRewardRow),
-            loser: saved.loser.map(normalizeRewardRow)
-          };
-        }
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        return normalizeRewardsLedger(JSON.parse(raw));
       } catch {
-        // A broken saved ledger should not stop the game from loading.
+        return null;
       }
+    }
+
+    function readRewards() {
+      const saved = readStoredRewards(REWARD_STORAGE_KEY) || readStoredRewards(REWARD_BACKUP_KEY);
+      if (saved) return saved;
       return {
         winner: defaultRewardRows("winner"),
         loser: defaultRewardRows("loser")
@@ -5142,11 +5219,59 @@
       };
     }
 
-    function saveRewards() {
+    function rewardBackupPayload() {
+      return {
+        app: "cat-tien-dinh-tai-xiangqi",
+        version: 2,
+        savedAt: new Date().toISOString(),
+        rewards: serializeRewards(),
+        rewardRoundClaims: normalizeRewardClaims(state.rewardRoundClaims)
+      };
+    }
+
+    function formatRewardSavedAt(savedAt) {
+      if (!savedAt) return "";
       try {
-        localStorage.setItem("dtct-xiangqi-rewards", JSON.stringify(state.rewards));
+        return new Date(savedAt).toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
       } catch {
-        // Local saving is best effort.
+        return "";
+      }
+    }
+
+    function updateRewardSaveState(message, tone = "ok") {
+      if (!els.rewardSaveState) return;
+      els.rewardSaveState.textContent = message;
+      els.rewardSaveState.classList.toggle("warn", tone === "warn");
+    }
+
+    function refreshRewardSaveStatus() {
+      let savedAt = "";
+      try {
+        savedAt = localStorage.getItem(REWARD_SAVED_AT_KEY) || "";
+      } catch {
+        updateRewardSaveState("This browser may block reward saving. Use Backup after changes.", "warn");
+        return;
+      }
+      const time = formatRewardSavedAt(savedAt);
+      updateRewardSaveState(time ? `Rewards saved on this device: ${time}.` : "Rewards auto-save on this device.");
+    }
+
+    function saveRewards() {
+      const payload = rewardBackupPayload();
+      try {
+        localStorage.setItem(REWARD_STORAGE_KEY, JSON.stringify(payload.rewards));
+        localStorage.setItem(REWARD_BACKUP_KEY, JSON.stringify(payload));
+        localStorage.setItem(REWARD_SAVED_AT_KEY, payload.savedAt);
+        updateRewardSaveState(`Rewards saved on this device: ${formatRewardSavedAt(payload.savedAt)}.`);
+        return true;
+      } catch {
+        updateRewardSaveState("This browser could not save rewards. Use Backup after changes.", "warn");
+        return false;
       }
     }
 
@@ -5201,6 +5326,79 @@
       render();
       refreshOpenRewardSummary();
       if (options.broadcast !== false) broadcastRewardSync();
+    }
+
+    function saveRewardsNow() {
+      const saved = saveRewards();
+      flashStatus(saved ? "Rewards saved on this device." : "Rewards could not be saved in this browser.");
+    }
+
+    function downloadRewardsBackup() {
+      const payload = rewardBackupPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cat-tien-dinh-tai-rewards-${payload.savedAt.slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      flashStatus("Rewards backup downloaded.");
+    }
+
+    function restoreRewardsPayload(payload, options = {}) {
+      const rewards = normalizeRewardsLedger(payload);
+      if (!rewards) {
+        playSound("invalid");
+        flashStatus("That file does not look like a rewards backup.");
+        return false;
+      }
+      state.rewards = rewards;
+      state.rewardRoundClaims = normalizeRewardClaims(payload.rewardRoundClaims);
+      saveAndRenderRewards({ broadcast: options.broadcast !== false });
+      flashStatus("Rewards restored and saved on this device.");
+      return true;
+    }
+
+    function restoreRewardsFromFile(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          restoreRewardsPayload(JSON.parse(String(reader.result || "{}")));
+        } catch {
+          playSound("invalid");
+          flashStatus("Could not read that rewards backup file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function applyRewardStorageEvent(event) {
+      if (![REWARD_STORAGE_KEY, REWARD_BACKUP_KEY, REWARD_SAVED_AT_KEY].includes(event.key)) return;
+      if (event.key === REWARD_SAVED_AT_KEY) {
+        refreshRewardSaveStatus();
+        return;
+      }
+      try {
+        const payload = JSON.parse(event.newValue || "null");
+        const rewards = normalizeRewardsLedger(payload);
+        if (!rewards) return;
+        state.rewards = rewards;
+        if (payload && payload.rewardRoundClaims) {
+          state.rewardRoundClaims = normalizeRewardClaims(payload.rewardRoundClaims);
+        }
+        renderCache.rewards = null;
+        render();
+        refreshOpenRewardSummary();
+        refreshRewardSaveStatus();
+        flashStatus("Rewards updated from another tab on this device.");
+      } catch {
+        // Ignore malformed external storage updates.
+      }
     }
 
     function escapeHtml(value) {
@@ -5868,6 +6066,10 @@
     });
     els.addWinnerRewardBtn.addEventListener("click", () => addReward("winner"));
     els.addLoserRewardBtn.addEventListener("click", () => addReward("loser"));
+    els.saveRewardsBtn.addEventListener("click", saveRewardsNow);
+    els.backupRewardsBtn.addEventListener("click", downloadRewardsBackup);
+    els.restoreRewardsBtn.addEventListener("click", () => els.rewardImportFile.click());
+    els.rewardImportFile.addEventListener("change", restoreRewardsFromFile);
     els.winnerSummaryBtn.addEventListener("click", () => openRewardSummary("winner"));
     els.loserSummaryBtn.addEventListener("click", () => openRewardSummary("loser"));
     els.winnerSyncRewardsBtn.addEventListener("click", () => broadcastRewardSync({ manual: true }));
@@ -5943,7 +6145,11 @@
       if (btn) applyBook(Number(btn.dataset.book));
     });
 
+    window.addEventListener("storage", applyRewardStorageEvent);
+    window.addEventListener("pagehide", () => saveRewards());
+
     initRoomFromUrl();
+    refreshRewardSaveStatus();
     render();
     scheduleAutoOurPlan();
   </script>
