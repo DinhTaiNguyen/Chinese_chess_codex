@@ -33,6 +33,10 @@ The coach is hidden until unlocked on the local browser. The default password is
 123
 ```
 
-After unlocking, the coach offers only two levels, plus selectable styles: balanced, attack, protect, and creative.
+After unlocking, the coach offers only two levels, plus selectable styles: balanced, attack, protect, and creative. The coach lock resets whenever the page is refreshed or reopened.
 
 This is a friendly client-side lock, not cryptographic security. Anyone who inspects the static source can find or change the password.
+
+## Rewards
+
+Winner and loser rewards save in the browser forever. Each reward tracks separate counts for Đình Tài and Cát Tiên, with plus/minus controls for correcting mistakes.
