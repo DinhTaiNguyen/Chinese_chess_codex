@@ -41,6 +41,6 @@ This is a friendly client-side lock, not cryptographic security. Anyone who insp
 
 Winner and loser rewards save in the browser forever. Each reward tracks separate counts for Đình Tài and Cát Tiên, with plus/minus controls for correcting mistakes. Use each panel's `Summary` button to see the full 🐶 Đình Tài and 🐼 Cát Tiên totals.
 
-When a game finishes, a board popup shows the winner and links to the reward summaries. It can be minimized or closed.
+When a game finishes, a board popup cheers the winner, encourages the loser, shows a random love quote, plays a short love sound effect when sound is enabled, and gives direct buttons to the winner and loser reward panels. It can be minimized or closed.
 
 `Redo` becomes active after `Undo`, so a mistaken undo can be restored.

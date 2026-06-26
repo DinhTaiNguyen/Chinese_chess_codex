@@ -1458,6 +1458,11 @@
       min-width: 0;
     }
 
+    .reward-panel.pulse-reward {
+      border-color: rgba(255, 218, 137, 0.72);
+      box-shadow: 0 0 0 3px rgba(220, 168, 77, 0.18), 0 0 30px rgba(220, 168, 77, 0.22);
+    }
+
     .reward-panel header {
       display: flex;
       align-items: center;
@@ -2181,6 +2186,14 @@
         notes: [329.63, 493.88, 659.25, 739.99, 659.25, 493.88, 392, 493.88]
       }
     };
+    const END_LOVE_QUOTES = [
+      "Love is the quiet move that protects the general and the brave move that opens the heart.",
+      "A good game ends with a smile; a sweet love story starts with the rematch.",
+      "Today one side wins the board, but both hearts win the evening.",
+      "Checkmate is temporary. Holding hands after the match is the real strategy.",
+      "Every clever move is cuter when it is played by someone you love.",
+      "The winner gets glory, the loser gets comfort, and both get one more reason to meet."
+    ];
 
     const state = {
       board: createInitialBoard(),
@@ -2196,6 +2209,8 @@
       gameOver: false,
       winnerColor: null,
       finishPopup: { closed: false, minimized: false },
+      endQuoteIndex: null,
+      endSoundPlayed: false,
       aiThinking: false,
       lastMove: null,
       training: null,
@@ -4083,7 +4098,8 @@
         state.gameOver,
         state.winnerColor || "",
         state.finishPopup.closed,
-        state.finishPopup.minimized
+        state.finishPopup.minimized,
+        state.endQuoteIndex
       ].join("|");
       if (renderCache.finishPopup === signature) return;
       renderCache.finishPopup = signature;
@@ -4096,20 +4112,25 @@
 
       const winner = playerLabel(state.winnerColor);
       const loser = playerLabel(other(state.winnerColor));
+      const winnerAvatar = state.winnerColor === RED ? "🐶" : "🐼";
+      const loserAvatar = state.winnerColor === RED ? "🐼" : "🐶";
+      const quote = endLoveQuote();
       els.finishPopup.className = `finish-popup active${state.finishPopup.minimized ? " minimized" : ""}`;
       if (state.finishPopup.minimized) {
         els.finishPopup.innerHTML = `
-          <strong>${winner} won</strong>
+          <strong>${winnerAvatar} ${winner} won</strong>
           <button class="icon-btn" data-finish-action="expand" aria-label="Expand match result"><i data-lucide="maximize-2"></i></button>
           <button class="icon-btn" data-finish-action="close" aria-label="Close match result"><i data-lucide="x"></i></button>
         `;
       } else {
         els.finishPopup.innerHTML = `
-          <h3>${winner} wins the match</h3>
-          <p>${loser} defended bravely. Pick a reward below and save the promise for your next date.</p>
+          <h3>${winnerAvatar} ${winner} wins the match</h3>
+          <p><strong>Winner cheer:</strong> ${winner}, brilliant heart strategy. Claim a sweet winner promise.</p>
+          <p><strong>Loser encouragement:</strong> ${loserAvatar} ${loser}, you fought bravely. Pick a comfort reward too.</p>
+          <p>${quote}</p>
           <div class="finish-actions">
-            <button class="text-btn primary" data-summary-kind="winner"><i data-lucide="trophy"></i>Winner Rewards</button>
-            <button class="text-btn" data-summary-kind="loser"><i data-lucide="heart-handshake"></i>Loser Rewards</button>
+            <button class="text-btn primary" data-reward-panel="winner"><i data-lucide="trophy"></i>${winnerAvatar} Winner Panel</button>
+            <button class="text-btn" data-reward-panel="loser"><i data-lucide="heart-handshake"></i>${loserAvatar} Loser Panel</button>
             <button class="icon-btn" data-finish-action="minimize" aria-label="Minimize match result"><i data-lucide="minus"></i></button>
             <button class="icon-btn" data-finish-action="close" aria-label="Close match result"><i data-lucide="x"></i></button>
           </div>
@@ -4119,6 +4140,11 @@
     }
 
     function handleFinishPopupAction(event) {
+      const panelButton = event.target.closest("[data-reward-panel]");
+      if (panelButton) {
+        scrollToRewardPanel(panelButton.dataset.rewardPanel);
+        return;
+      }
       const summaryButton = event.target.closest("[data-summary-kind]");
       if (summaryButton) {
         openRewardSummary(summaryButton.dataset.summaryKind);
@@ -4136,6 +4162,25 @@
       }
       renderCache.finishPopup = null;
       render();
+    }
+
+    function endLoveQuote() {
+      const index = Number.isInteger(state.endQuoteIndex) ? state.endQuoteIndex : 0;
+      return END_LOVE_QUOTES[index % END_LOVE_QUOTES.length];
+    }
+
+    function chooseEndLoveQuote() {
+      state.endQuoteIndex = Math.floor(Math.random() * END_LOVE_QUOTES.length);
+    }
+
+    function scrollToRewardPanel(kind) {
+      const target = kind === "loser"
+        ? els.loserRewardList.closest(".reward-panel")
+        : els.winnerRewardList.closest(".reward-panel");
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+      target.classList.add("pulse-reward");
+      setTimeout(() => target.classList.remove("pulse-reward"), 1300);
     }
 
     function phaseLabel(board) {
@@ -4416,6 +4461,15 @@
         playTone(500, 0.08, "triangle", 0.034);
         playTone(750, 0.12, "triangle", 0.032, 0.08);
       }
+    }
+
+    function playLoveFinishSound() {
+      if (!state.soundEnabled) return;
+      playTone(392, 0.16, "sine", 0.034, 0, 523.25);
+      playTone(523.25, 0.18, "triangle", 0.032, 0.1, 659.25);
+      playTone(659.25, 0.2, "sine", 0.03, 0.22, 783.99);
+      playTone(987.77, 0.13, "sine", 0.02, 0.42);
+      playTone(783.99, 0.22, "triangle", 0.026, 0.5, 1046.5);
     }
 
     function renderMusicControls() {
@@ -4708,7 +4762,9 @@
         history: state.history.slice(),
         gameOver: state.gameOver,
         winnerColor: state.winnerColor,
-        finishPopup: { ...state.finishPopup }
+        finishPopup: { ...state.finishPopup },
+        endQuoteIndex: state.endQuoteIndex,
+        endSoundPlayed: state.endSoundPlayed
       };
     }
 
@@ -4724,6 +4780,8 @@
       state.gameOver = snapshot.gameOver;
       state.winnerColor = snapshot.winnerColor;
       state.finishPopup = { ...snapshot.finishPopup };
+      state.endQuoteIndex = snapshot.endQuoteIndex;
+      state.endSoundPlayed = snapshot.endSoundPlayed;
       state.selected = null;
       state.selectedMoves = [];
       state.hintMove = null;
@@ -4749,11 +4807,17 @@
       const moves = legalMoves(state.board, state.sideToMove);
       const missingKing = !findGeneral(state.board, state.sideToMove);
       if (missingKing || !moves.length) {
+        const wasGameOver = state.gameOver;
         const loser = state.sideToMove === RED ? "Red" : "Black";
         const winner = state.sideToMove === RED ? "Black" : "Red";
         state.gameOver = true;
         state.winnerColor = state.sideToMove === RED ? BLACK : RED;
         state.finishPopup = { closed: false, minimized: false };
+        if (!wasGameOver || state.endQuoteIndex === null) chooseEndLoveQuote();
+        if (!state.endSoundPlayed) {
+          playLoveFinishSound();
+          state.endSoundPlayed = true;
+        }
         const reason = missingKing || isInCheck(state.board, state.sideToMove) ? "checkmate" : "no legal move";
         flashStatus(`${playerLabel(state.winnerColor)} wins by ${reason}.`);
         return;
@@ -4761,6 +4825,8 @@
       state.gameOver = false;
       state.winnerColor = null;
       state.finishPopup = { closed: false, minimized: false };
+      state.endQuoteIndex = null;
+      state.endSoundPlayed = false;
     }
 
     function queueAiMove() {
@@ -4816,6 +4882,8 @@
       state.gameOver = false;
       state.winnerColor = null;
       state.finishPopup = { closed: false, minimized: false };
+      state.endQuoteIndex = null;
+      state.endSoundPlayed = false;
       state.rewardRoundClaims = {};
       state.aiThinking = false;
       if (state.online.role) state.aiEnabled = false;
@@ -4876,6 +4944,8 @@
       state.gameOver = false;
       state.winnerColor = null;
       state.finishPopup = { closed: false, minimized: false };
+      state.endQuoteIndex = null;
+      state.endSoundPlayed = false;
       state.selected = null;
       state.selectedMoves = [];
       state.hintMove = null;
@@ -5599,7 +5669,8 @@
         lastMove: serializeMove(state.lastMove),
         history: serializeHistory(state.history),
         gameOver: state.gameOver,
-        winnerColor: state.winnerColor
+        winnerColor: state.winnerColor,
+        endQuoteIndex: state.endQuoteIndex
       };
     }
 
@@ -5614,6 +5685,8 @@
       state.gameOver = Boolean(snapshot.gameOver);
       state.winnerColor = snapshot.winnerColor || null;
       state.finishPopup = { closed: false, minimized: false };
+      state.endQuoteIndex = Number.isInteger(snapshot.endQuoteIndex) ? snapshot.endQuoteIndex : null;
+      state.endSoundPlayed = Boolean(snapshot.gameOver);
       state.playerColor = state.online.role === "guest" ? BLACK : RED;
       state.aiColor = other(state.playerColor);
       state.flipped = state.playerColor === BLACK;
