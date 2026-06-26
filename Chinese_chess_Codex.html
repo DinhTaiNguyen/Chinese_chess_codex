@@ -1442,39 +1442,30 @@
       line-height: 1.45;
     }
 
-    .reward-storage-tools {
-      display: flex;
+    .reward-live-state {
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
       padding: 9px 10px;
       border-radius: 8px;
       border: 1px solid rgba(255, 244, 212, 0.11);
       background: rgba(255, 244, 212, 0.055);
-    }
-
-    .reward-save-state {
       color: rgba(255, 244, 212, 0.66);
       font-size: 12px;
       font-weight: 800;
       line-height: 1.35;
     }
 
-    .reward-save-state.warn {
+    .reward-live-state.warn {
       color: #ffd08f;
     }
 
-    .reward-storage-buttons {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .reward-storage-buttons .text-btn {
-      min-height: 34px;
-      padding: 0 10px;
+    .reward-live-state i {
+      width: 15px;
+      height: 15px;
+      flex: 0 0 auto;
     }
 
     .reward-panels {
@@ -1650,19 +1641,6 @@
 
       .reward-panels {
         grid-template-columns: 1fr;
-      }
-
-      .reward-storage-tools,
-      .reward-storage-buttons {
-        align-items: stretch;
-      }
-
-      .reward-storage-tools {
-        display: grid;
-      }
-
-      .reward-storage-buttons .text-btn {
-        flex: 1 1 96px;
       }
 
       .summary-grid {
@@ -1988,14 +1966,9 @@
       <div class="rewards-summary" id="rewardSummary">
         Finish a match, then choose the promises you want to collect.
       </div>
-      <div class="reward-storage-tools">
-        <span class="reward-save-state" id="rewardSaveState">Rewards auto-save on this device.</span>
-        <div class="reward-storage-buttons">
-          <button class="text-btn" id="saveRewardsBtn" type="button"><i data-lucide="save"></i>Save</button>
-          <button class="text-btn" id="backupRewardsBtn" type="button"><i data-lucide="download"></i>Backup</button>
-          <button class="text-btn" id="restoreRewardsBtn" type="button"><i data-lucide="upload"></i>Restore</button>
-        </div>
-        <input id="rewardImportFile" type="file" accept="application/json" hidden />
+      <div class="reward-live-state" id="rewardSaveState">
+        <i data-lucide="radio-tower"></i>
+        Rewards auto-save here and live-sync when both players are connected.
       </div>
       <div class="reward-panels">
         <div class="reward-panel">
@@ -2200,8 +2173,8 @@
     const PRIVATE_COACH_PASSWORD = "123";
     const DEFAULT_ROOM_CODE = "cattiendinhtai";
     const REWARD_STORAGE_KEY = "dtct-xiangqi-rewards";
-    const REWARD_BACKUP_KEY = "dtct-xiangqi-rewards-backup";
     const REWARD_SAVED_AT_KEY = "dtct-xiangqi-rewards-saved-at";
+    const REWARD_CLIENT_ID_KEY = "dtct-xiangqi-reward-client-id";
     const PLAYER_NAME = {
       red: "Đình Tài",
       black: "Cát Tiên"
@@ -2290,6 +2263,7 @@
       theme: readTextSetting("dtct-xiangqi-theme", "classic"),
       musicEnabled: false,
       musicSong: readTextSetting("dtct-xiangqi-music-song", "kalimba"),
+      rewardClientId: readRewardClientId(),
       rewards: readRewards(),
       rewardRoundClaims: {},
       online: {
@@ -2309,6 +2283,7 @@
     let autoPlanTimer = null;
     let ourPlanRequestId = 0;
     let activeOurPlanRequestId = 0;
+    let lastRewardTimestamp = Date.now();
     const renderCache = {
       coords: null,
       book: null,
@@ -2370,10 +2345,6 @@
       coachSpeechBtn: document.getElementById("coachSpeechBtn"),
       rewardSummary: document.getElementById("rewardSummary"),
       rewardSaveState: document.getElementById("rewardSaveState"),
-      saveRewardsBtn: document.getElementById("saveRewardsBtn"),
-      backupRewardsBtn: document.getElementById("backupRewardsBtn"),
-      restoreRewardsBtn: document.getElementById("restoreRewardsBtn"),
-      rewardImportFile: document.getElementById("rewardImportFile"),
       winnerRewardList: document.getElementById("winnerRewardList"),
       loserRewardList: document.getElementById("loserRewardList"),
       winnerRewardInput: document.getElementById("winnerRewardInput"),
@@ -5197,7 +5168,7 @@
     }
 
     function readRewards() {
-      const saved = readStoredRewards(REWARD_STORAGE_KEY) || readStoredRewards(REWARD_BACKUP_KEY);
+      const saved = readStoredRewards(REWARD_STORAGE_KEY);
       if (saved) return saved;
       return {
         winner: defaultRewardRows("winner"),
@@ -5206,6 +5177,8 @@
     }
 
     function normalizeRewardRow(row, index = 0) {
+      const updatedAt = Number(row.updatedAt) || Number(row.createdAt) || 1;
+      const deletedAt = Number(row.deletedAt) || 0;
       const counts = row.counts && typeof row.counts === "object"
         ? row.counts
         : { red: Number(row.count) || 0, black: 0 };
@@ -5215,18 +5188,44 @@
         counts: {
           red: Math.max(0, Number(counts.red) || 0),
           black: Math.max(0, Number(counts.black) || 0)
-        }
+        },
+        updatedAt,
+        deletedAt
       };
     }
 
-    function rewardBackupPayload() {
-      return {
-        app: "cat-tien-dinh-tai-xiangqi",
-        version: 2,
-        savedAt: new Date().toISOString(),
-        rewards: serializeRewards(),
-        rewardRoundClaims: normalizeRewardClaims(state.rewardRoundClaims)
-      };
+    function readRewardClientId() {
+      try {
+        const saved = localStorage.getItem(REWARD_CLIENT_ID_KEY);
+        if (saved) return saved;
+        const id = `reward-client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+        localStorage.setItem(REWARD_CLIENT_ID_KEY, id);
+        return id;
+      } catch {
+        return `reward-client-memory-${Math.random().toString(36).slice(2, 9)}`;
+      }
+    }
+
+    function nextRewardTimestamp() {
+      lastRewardTimestamp = Math.max(Date.now(), lastRewardTimestamp + 1);
+      return lastRewardTimestamp;
+    }
+
+    function touchReward(row, timestamp = nextRewardTimestamp()) {
+      row.updatedAt = timestamp;
+      return row;
+    }
+
+    function rewardVersion(row) {
+      return Math.max(Number(row.updatedAt) || 0, Number(row.deletedAt) || 0);
+    }
+
+    function isRewardActive(row) {
+      return !row.deletedAt;
+    }
+
+    function activeRewardRows(kind) {
+      return state.rewards[kind].filter(isRewardActive);
     }
 
     function formatRewardSavedAt(savedAt) {
@@ -5254,23 +5253,23 @@
       try {
         savedAt = localStorage.getItem(REWARD_SAVED_AT_KEY) || "";
       } catch {
-        updateRewardSaveState("This browser may block reward saving. Use Backup after changes.", "warn");
+        updateRewardSaveState("Rewards can live-sync online, but this browser may block local saving.", "warn");
         return;
       }
       const time = formatRewardSavedAt(savedAt);
-      updateRewardSaveState(time ? `Rewards saved on this device: ${time}.` : "Rewards auto-save on this device.");
+      const syncText = state.online.connected ? "Live sync is connected." : "Connect both players for live sync.";
+      updateRewardSaveState(time ? `Rewards auto-saved here: ${time}. ${syncText}` : `Rewards auto-save here. ${syncText}`);
     }
 
     function saveRewards() {
-      const payload = rewardBackupPayload();
       try {
-        localStorage.setItem(REWARD_STORAGE_KEY, JSON.stringify(payload.rewards));
-        localStorage.setItem(REWARD_BACKUP_KEY, JSON.stringify(payload));
-        localStorage.setItem(REWARD_SAVED_AT_KEY, payload.savedAt);
-        updateRewardSaveState(`Rewards saved on this device: ${formatRewardSavedAt(payload.savedAt)}.`);
+        const savedAt = new Date().toISOString();
+        localStorage.setItem(REWARD_STORAGE_KEY, JSON.stringify(serializeRewards()));
+        localStorage.setItem(REWARD_SAVED_AT_KEY, savedAt);
+        refreshRewardSaveStatus();
         return true;
       } catch {
-        updateRewardSaveState("This browser could not save rewards. Use Backup after changes.", "warn");
+        updateRewardSaveState("Rewards changed live, but this browser could not save them locally.", "warn");
         return false;
       }
     }
@@ -5292,32 +5291,106 @@
     function broadcastRewardSync(options = {}) {
       const sent = sendOnlineMessage({
         type: "rewards",
+        clientId: state.rewardClientId,
         rewards: serializeRewards(),
         rewardRoundClaims: state.rewardRoundClaims,
         updatedAt: Date.now()
       });
       if (options.manual) {
-        flashStatus(sent ? "Rewards synced to the other player." : "Rewards saved here. Connect online to sync.");
+        flashStatus(sent ? "Rewards sent live to the other player." : "Connect both players first, then Sync can send rewards.");
       }
       return sent;
     }
 
-    function applyRewardSync(message) {
-      if (!message || !message.rewards) return;
-      state.rewards = {
-        winner: Array.isArray(message.rewards.winner)
-          ? message.rewards.winner.map(normalizeRewardRow)
-          : state.rewards.winner,
-        loser: Array.isArray(message.rewards.loser)
-          ? message.rewards.loser.map(normalizeRewardRow)
-          : state.rewards.loser
+    function broadcastRewardAction(action) {
+      return sendOnlineMessage({
+        type: "reward-action",
+        clientId: state.rewardClientId,
+        ...action
+      });
+    }
+
+    function rewardLedgerSignature(rewards = state.rewards) {
+      return JSON.stringify({
+        winner: rewards.winner.map(normalizeRewardRow),
+        loser: rewards.loser.map(normalizeRewardRow)
+      });
+    }
+
+    function mergeRewardRows(localRow, incomingRow) {
+      const localVersion = rewardVersion(localRow);
+      const incomingVersion = rewardVersion(incomingRow);
+      if (incomingVersion > localVersion) return incomingRow;
+      if (incomingVersion < localVersion) return localRow;
+      if (incomingRow.deletedAt || localRow.deletedAt) {
+        return incomingRow.deletedAt ? incomingRow : localRow;
+      }
+      return {
+        ...localRow,
+        text: incomingRow.text || localRow.text,
+        counts: {
+          red: Math.max(localRow.counts.red, incomingRow.counts.red),
+          black: Math.max(localRow.counts.black, incomingRow.counts.black)
+        },
+        updatedAt: Math.max(localRow.updatedAt || 0, incomingRow.updatedAt || 0)
       };
-      state.rewardRoundClaims = normalizeRewardClaims(message.rewardRoundClaims);
+    }
+
+    function mergeRewardList(localList, incomingList) {
+      const merged = [];
+      const index = new Map();
+      localList.map(normalizeRewardRow).forEach((row) => {
+        index.set(row.id, merged.length);
+        merged.push(row);
+      });
+      incomingList.map(normalizeRewardRow).forEach((row) => {
+        const existingIndex = index.get(row.id);
+        if (existingIndex === undefined) {
+          index.set(row.id, merged.length);
+          merged.push(row);
+          return;
+        }
+        merged[existingIndex] = mergeRewardRows(merged[existingIndex], row);
+      });
+      return merged;
+    }
+
+    function applyRewardLedger(rewards, claims, statusText) {
+      const incoming = normalizeRewardsLedger(rewards);
+      if (!incoming) return false;
+      const before = rewardLedgerSignature();
+      const claimBefore = JSON.stringify(state.rewardRoundClaims || {});
+      state.rewards = {
+        winner: mergeRewardList(state.rewards.winner, incoming.winner),
+        loser: mergeRewardList(state.rewards.loser, incoming.loser)
+      };
+      if (claims) {
+        state.rewardRoundClaims = normalizeRewardClaims(claims);
+      }
+      const changed = before !== rewardLedgerSignature() || claimBefore !== JSON.stringify(state.rewardRoundClaims || {});
+      if (!changed) return false;
       saveRewards();
       renderCache.rewards = null;
       render();
       refreshOpenRewardSummary();
-      flashStatus("Rewards updated from the other player.");
+      if (statusText) flashStatus(statusText);
+      return true;
+    }
+
+    function applyRewardSync(message) {
+      if (!message || !message.rewards || message.clientId === state.rewardClientId) return;
+      applyRewardLedger(message.rewards, message.rewardRoundClaims, "Rewards updated live from the other player.");
+    }
+
+    function applyRewardAction(message) {
+      if (!message || message.clientId === state.rewardClientId) return;
+      const kind = message.kind === "loser" ? "loser" : message.kind === "winner" ? "winner" : null;
+      if (!kind || !message.row) return;
+      applyRewardLedger(
+        { winner: kind === "winner" ? [message.row] : [], loser: kind === "loser" ? [message.row] : [] },
+        message.rewardRoundClaims,
+        "Rewards updated live from the other player."
+      );
     }
 
     function saveAndRenderRewards(options = {}) {
@@ -5325,77 +5398,22 @@
       renderCache.rewards = null;
       render();
       refreshOpenRewardSummary();
-      if (options.broadcast !== false) broadcastRewardSync();
-    }
-
-    function saveRewardsNow() {
-      const saved = saveRewards();
-      flashStatus(saved ? "Rewards saved on this device." : "Rewards could not be saved in this browser.");
-    }
-
-    function downloadRewardsBackup() {
-      const payload = rewardBackupPayload();
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `cat-tien-dinh-tai-rewards-${payload.savedAt.slice(0, 10)}.json`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      flashStatus("Rewards backup downloaded.");
-    }
-
-    function restoreRewardsPayload(payload, options = {}) {
-      const rewards = normalizeRewardsLedger(payload);
-      if (!rewards) {
-        playSound("invalid");
-        flashStatus("That file does not look like a rewards backup.");
-        return false;
+      if (options.syncAction) {
+        broadcastRewardAction(options.syncAction);
+      } else if (options.broadcast !== false) {
+        broadcastRewardSync();
       }
-      state.rewards = rewards;
-      state.rewardRoundClaims = normalizeRewardClaims(payload.rewardRoundClaims);
-      saveAndRenderRewards({ broadcast: options.broadcast !== false });
-      flashStatus("Rewards restored and saved on this device.");
-      return true;
-    }
-
-    function restoreRewardsFromFile(event) {
-      const file = event.target.files && event.target.files[0];
-      event.target.value = "";
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          restoreRewardsPayload(JSON.parse(String(reader.result || "{}")));
-        } catch {
-          playSound("invalid");
-          flashStatus("Could not read that rewards backup file.");
-        }
-      };
-      reader.readAsText(file);
     }
 
     function applyRewardStorageEvent(event) {
-      if (![REWARD_STORAGE_KEY, REWARD_BACKUP_KEY, REWARD_SAVED_AT_KEY].includes(event.key)) return;
+      if (![REWARD_STORAGE_KEY, REWARD_SAVED_AT_KEY].includes(event.key)) return;
       if (event.key === REWARD_SAVED_AT_KEY) {
         refreshRewardSaveStatus();
         return;
       }
       try {
         const payload = JSON.parse(event.newValue || "null");
-        const rewards = normalizeRewardsLedger(payload);
-        if (!rewards) return;
-        state.rewards = rewards;
-        if (payload && payload.rewardRoundClaims) {
-          state.rewardRoundClaims = normalizeRewardClaims(payload.rewardRoundClaims);
-        }
-        renderCache.rewards = null;
-        render();
-        refreshOpenRewardSummary();
-        refreshRewardSaveStatus();
-        flashStatus("Rewards updated from another tab on this device.");
+        applyRewardLedger(payload, null, "Rewards updated from another tab on this device.");
       } catch {
         // Ignore malformed external storage updates.
       }
@@ -5412,7 +5430,7 @@
 
     function renderRewardRows(kind) {
       const claims = state.rewardRoundClaims || {};
-      return state.rewards[kind].map((item) => {
+      return activeRewardRows(kind).map((item) => {
         const checked = claims[item.id] ? "checked" : "";
         const recipient = rewardRecipient(kind);
         const disabled = recipient ? "" : "disabled";
@@ -5466,7 +5484,7 @@
     }
 
     function rewardTotals(kind) {
-      return state.rewards[kind].reduce((totals, item) => {
+      return activeRewardRows(kind).reduce((totals, item) => {
         totals.red += item.counts.red;
         totals.black += item.counts.black;
         return totals;
@@ -5486,10 +5504,10 @@
       els.rewardSummaryModal.dataset.summaryKind = kind;
       els.rewardSummaryGrid.innerHTML = [RED, BLACK].map((color) => {
         const avatar = color === RED ? "🐶" : "🐼";
-        const rows = state.rewards[kind].map((item) => (
+        const rows = activeRewardRows(kind).map((item) => (
           `<li><strong>${item.counts[color]}</strong> × ${escapeHtml(item.text)}</li>`
         )).join("");
-        const total = state.rewards[kind].reduce((sum, item) => sum + item.counts[color], 0);
+        const total = activeRewardRows(kind).reduce((sum, item) => sum + item.counts[color], 0);
         return `
           <section class="summary-person">
             <h3>${avatar} ${escapeHtml(playerLabel(color))} <span class="badge">${total} total</span></h3>
@@ -5504,7 +5522,7 @@
 
     function closeRewardSummary() {
       els.rewardSummaryModal.classList.remove("active");
-      els.rewardSummaryBody.innerHTML = "";
+      els.rewardSummaryGrid.innerHTML = "";
       delete els.rewardSummaryModal.dataset.summaryKind;
     }
 
@@ -5513,15 +5531,22 @@
       openRewardSummary(els.rewardSummaryModal.dataset.summaryKind || "winner");
     }
 
-    function findReward(kind, id) {
-      return state.rewards[kind].find((item) => item.id === id);
+    function findReward(kind, id, options = {}) {
+      return state.rewards[kind].find((item) => item.id === id && (options.includeDeleted || isRewardActive(item)));
     }
 
     function adjustReward(kind, id, delta, player) {
       const reward = findReward(kind, id);
       if (!reward || !reward.counts || !(player in reward.counts)) return;
       reward.counts[player] = Math.max(0, reward.counts[player] + delta);
-      saveAndRenderRewards();
+      touchReward(reward);
+      saveAndRenderRewards({
+        syncAction: {
+          action: "upsert",
+          kind,
+          row: normalizeRewardRow(reward)
+        }
+      });
     }
 
     function claimReward(kind, id, checked) {
@@ -5543,7 +5568,15 @@
         delete state.rewardRoundClaims[id];
         reward.counts[claimedPlayer] = Math.max(0, reward.counts[claimedPlayer] - 1);
       }
-      saveAndRenderRewards();
+      touchReward(reward);
+      saveAndRenderRewards({
+        syncAction: {
+          action: "upsert",
+          kind,
+          row: normalizeRewardRow(reward),
+          rewardRoundClaims: normalizeRewardClaims(state.rewardRoundClaims)
+        }
+      });
     }
 
     function addReward(kind) {
@@ -5553,19 +5586,37 @@
         playSound("invalid");
         return;
       }
-      state.rewards[kind].push({
+      const reward = touchReward({
         id: makeRewardId(kind, state.rewards[kind].length),
         text,
         counts: { red: 0, black: 0 }
       });
+      state.rewards[kind].push(reward);
       input.value = "";
-      saveAndRenderRewards();
+      saveAndRenderRewards({
+        syncAction: {
+          action: "upsert",
+          kind,
+          row: normalizeRewardRow(reward)
+        }
+      });
     }
 
     function removeReward(kind, id) {
-      state.rewards[kind] = state.rewards[kind].filter((item) => item.id !== id);
+      const reward = findReward(kind, id, { includeDeleted: true });
+      if (!reward) return;
+      const timestamp = nextRewardTimestamp();
+      reward.deletedAt = timestamp;
+      reward.updatedAt = timestamp;
       delete state.rewardRoundClaims[id];
-      saveAndRenderRewards();
+      saveAndRenderRewards({
+        syncAction: {
+          action: "remove",
+          kind,
+          row: normalizeRewardRow(reward),
+          rewardRoundClaims: normalizeRewardClaims(state.rewardRoundClaims)
+        }
+      });
     }
 
     function handleRewardAction(event) {
@@ -5671,6 +5722,7 @@
       state.online.status = text;
       els.connectionStatus.textContent = text;
       updateModeClasses();
+      refreshRewardSaveStatus();
     }
 
     function ensurePeerSupport() {
@@ -5786,6 +5838,7 @@
           broadcastRewardSync({ broadcast: true });
         } else {
           sendOnlineMessage({ type: "hello", name: localPlayerLabel() });
+          broadcastRewardSync({ broadcast: true });
         }
         render();
       });
@@ -5850,6 +5903,10 @@
       }
       if (message.type === "rewards") {
         applyRewardSync(message);
+        return;
+      }
+      if (message.type === "reward-action") {
+        applyRewardAction(message);
         return;
       }
     }
@@ -6066,10 +6123,6 @@
     });
     els.addWinnerRewardBtn.addEventListener("click", () => addReward("winner"));
     els.addLoserRewardBtn.addEventListener("click", () => addReward("loser"));
-    els.saveRewardsBtn.addEventListener("click", saveRewardsNow);
-    els.backupRewardsBtn.addEventListener("click", downloadRewardsBackup);
-    els.restoreRewardsBtn.addEventListener("click", () => els.rewardImportFile.click());
-    els.rewardImportFile.addEventListener("change", restoreRewardsFromFile);
     els.winnerSummaryBtn.addEventListener("click", () => openRewardSummary("winner"));
     els.loserSummaryBtn.addEventListener("click", () => openRewardSummary("loser"));
     els.winnerSyncRewardsBtn.addEventListener("click", () => broadcastRewardSync({ manual: true }));

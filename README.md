@@ -41,9 +41,9 @@ This is a friendly client-side lock, not cryptographic security. Anyone who insp
 
 Winner and loser rewards save in the browser forever. Each reward tracks separate counts for Đình Tài and Cát Tiên, with plus/minus controls for correcting mistakes. Use each panel's `Summary` button to see the full 🐶 Đình Tài and 🐼 Cát Tiên totals.
 
-When both players are online, reward changes sync live between browsers. Each reward panel also has a `Sync` button that manually sends the latest reward table to the other player.
+When both players are online, reward changes sync live between browsers. Each panel still has a `Sync` button as a manual online resend, but normal reward edits broadcast automatically.
 
-Offline reward edits auto-save on the current browser too, so reopening the same deployed site keeps the added rewards and counts. Use `Save` to force a local save, `Backup` to download the reward ledger as a JSON file, and `Restore` to bring that saved ledger into another browser/device.
+Offline reward edits auto-save on the current browser too, so reopening the same deployed site keeps the added rewards and counts.
 
 When a game finishes, a board popup cheers the winner, encourages the loser, shows a random love quote, plays a short love sound effect when sound is enabled, and gives direct buttons to the winner and loser reward panels. It can be minimized or closed.
 
