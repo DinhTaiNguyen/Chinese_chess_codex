@@ -17,6 +17,8 @@ A static two-player Chinese chess web app for GitHub Pages.
 4. Cát Tiên opens the link. Her browser joins as Black automatically.
 5. Red moves first. Each legal move syncs to the other browser.
 
+Either player can click `New Black` to begin a fresh synced game from the Black side. The other browser updates to the opposite color automatically.
+
 The default room code is:
 
 ```text
@@ -24,6 +26,8 @@ cattiendinhtai
 ```
 
 If auto-join does not start, Cát Tiên can paste the room code and click `Join`.
+
+The funny music song and volume are saved in the browser. When both players are connected, music state and volume sync to the other player too.
 
 ## Private Coach
 

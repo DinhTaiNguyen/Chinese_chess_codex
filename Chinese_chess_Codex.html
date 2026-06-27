@@ -965,6 +965,25 @@
       height: 40px;
     }
 
+    .range-field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .range-field label span {
+      color: #fff2bd;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .range-field input[type="range"] {
+      width: 100%;
+      height: 40px;
+      accent-color: var(--gold);
+    }
+
     .field select option {
       background: #1c1510;
       color: var(--ivory);
@@ -1709,7 +1728,7 @@
 
       <div class="toolbar">
         <button class="icon-btn" id="newGameBtn" title="New game" aria-label="New game"><i data-lucide="sparkles"></i></button>
-        <button class="text-btn offline-only" id="startBlackBtn" title="New game as Black"><i data-lucide="moon"></i>New Black</button>
+        <button class="text-btn" id="startBlackBtn" title="New game as Black"><i data-lucide="moon"></i>New Black</button>
         <button class="icon-btn" id="undoBtn" title="Undo move" aria-label="Undo move"><i data-lucide="undo-2"></i></button>
         <button class="icon-btn" id="redoBtn" title="Redo move" aria-label="Redo move" disabled><i data-lucide="redo-2"></i></button>
         <button class="icon-btn" id="soundFxBtn" title="Sound effects on" aria-label="Toggle sound effects" aria-pressed="true"><i data-lucide="volume-2"></i></button>
@@ -1808,6 +1827,10 @@
               <div class="field">
                 <label for="musicToggleBtn">Music Toggle</label>
                 <button class="text-btn" id="musicToggleBtn" type="button"><i data-lucide="music"></i>Music Off</button>
+              </div>
+              <div class="field range-field">
+                <label for="volumeSlider">Volume <span id="volumeValue">70%</span></label>
+                <input id="volumeSlider" type="range" min="0" max="100" step="5" value="70" />
               </div>
             </div>
 
@@ -2263,6 +2286,7 @@
       theme: readTextSetting("dtct-xiangqi-theme", "classic"),
       musicEnabled: false,
       musicSong: readTextSetting("dtct-xiangqi-music-song", "kalimba"),
+      volume: readNumberSetting("dtct-xiangqi-volume", 70, 0, 100),
       rewardClientId: readRewardClientId(),
       rewards: readRewards(),
       rewardRoundClaims: {},
@@ -2330,6 +2354,8 @@
       themeSelect: document.getElementById("themeSelect"),
       musicSelect: document.getElementById("musicSelect"),
       musicToggleBtn: document.getElementById("musicToggleBtn"),
+      volumeSlider: document.getElementById("volumeSlider"),
+      volumeValue: document.getElementById("volumeValue"),
       roomCodeInput: document.getElementById("roomCodeInput"),
       connectionStatus: document.getElementById("connectionStatus"),
       hostRoomBtn: document.getElementById("hostRoomBtn"),
@@ -2530,8 +2556,38 @@
       return color === RED ? BLACK : RED;
     }
 
+    function currentHostColor() {
+      if (!state.online.role) return RED;
+      return state.online.role === "host" ? state.playerColor : other(state.playerColor);
+    }
+
+    function colorForOnlineRole(role, hostColor = currentHostColor()) {
+      return role === "guest" ? other(hostColor) : hostColor;
+    }
+
+    function roleForColor(color) {
+      if (!state.online.role) return color === state.playerColor ? "host" : "guest";
+      return color === currentHostColor() ? "host" : "guest";
+    }
+
+    function playerAvatar(color) {
+      return roleForColor(color) === "host" ? "🐶" : "🐼";
+    }
+
     function playerLabel(color) {
-      return PLAYER_NAME[color] || (color === RED ? "Red" : "Black");
+      return roleForColor(color) === "host" ? PLAYER_NAME.red : PLAYER_NAME.black;
+    }
+
+    function rewardPersonKeyForColor(color) {
+      return roleForColor(color) === "host" ? RED : BLACK;
+    }
+
+    function rewardPersonLabel(personKey) {
+      return personKey === RED ? PLAYER_NAME.red : PLAYER_NAME.black;
+    }
+
+    function rewardPersonAvatar(personKey) {
+      return personKey === RED ? "🐶" : "🐼";
     }
 
     function localPlayerLabel() {
@@ -4125,8 +4181,12 @@
       renderCache.players = signature;
       els.redPlayerCard.classList.toggle("active", state.sideToMove === RED && !state.gameOver);
       els.blackPlayerCard.classList.toggle("active", state.sideToMove === BLACK && !state.gameOver);
-      els.redPlayerCard.querySelector("em").textContent = `${PLAYER_NAME.red} · Red${state.online.role === "host" ? " · you" : ""}`;
-      els.blackPlayerCard.querySelector("em").textContent = `${PLAYER_NAME.black} · Black${state.online.role === "guest" ? " · you" : ""}`;
+      els.redPlayerCard.querySelector(".avatar").textContent = playerAvatar(RED);
+      els.blackPlayerCard.querySelector(".avatar").textContent = playerAvatar(BLACK);
+      els.redPlayerCard.querySelector("strong").textContent = roleForColor(RED) === "host" ? "Host" : "Guest";
+      els.blackPlayerCard.querySelector("strong").textContent = roleForColor(BLACK) === "host" ? "Host" : "Guest";
+      els.redPlayerCard.querySelector("em").textContent = `${playerLabel(RED)} · Red${state.playerColor === RED ? " · you" : ""}`;
+      els.blackPlayerCard.querySelector("em").textContent = `${playerLabel(BLACK)} · Black${state.playerColor === BLACK ? " · you" : ""}`;
     }
 
     function renderFinishPopup() {
@@ -4135,6 +4195,8 @@
         state.winnerColor || "",
         state.finishPopup.closed,
         state.finishPopup.minimized,
+        state.playerColor,
+        state.online.role,
         state.endQuoteIndex
       ].join("|");
       if (renderCache.finishPopup === signature) return;
@@ -4148,8 +4210,8 @@
 
       const winner = playerLabel(state.winnerColor);
       const loser = playerLabel(other(state.winnerColor));
-      const winnerAvatar = state.winnerColor === RED ? "🐶" : "🐼";
-      const loserAvatar = state.winnerColor === RED ? "🐼" : "🐶";
+      const winnerAvatar = playerAvatar(state.winnerColor);
+      const loserAvatar = playerAvatar(other(state.winnerColor));
       const quote = endLoveQuote();
       els.finishPopup.className = `finish-popup active${state.finishPopup.minimized ? " minimized" : ""}`;
       if (state.finishPopup.minimized) {
@@ -4449,8 +4511,14 @@
       return audioCtx;
     }
 
+    function volumeScale() {
+      return Math.max(0, Math.min(1, Number(state.volume) / 100));
+    }
+
     function playTone(freq, duration = 0.08, type = "sine", gain = 0.055, delay = 0, endFreq = null) {
       if (!state.soundEnabled) return;
+      const scaledGain = gain * volumeScale();
+      if (scaledGain <= 0.0005) return;
       const ctx = ensureAudioContext();
       if (!ctx) return;
       const start = ctx.currentTime + delay;
@@ -4460,7 +4528,7 @@
       osc.frequency.setValueAtTime(freq, start);
       if (endFreq) osc.frequency.linearRampToValueAtTime(endFreq, start + duration);
       amp.gain.setValueAtTime(0.001, start);
-      amp.gain.exponentialRampToValueAtTime(gain, start + 0.012);
+      amp.gain.exponentialRampToValueAtTime(scaledGain, start + 0.012);
       amp.gain.exponentialRampToValueAtTime(0.001, start + duration);
       osc.connect(amp).connect(ctx.destination);
       osc.start(start);
@@ -4501,18 +4569,29 @@
 
     function playLoveFinishSound() {
       if (!state.soundEnabled) return;
-      playTone(392, 0.16, "sine", 0.034, 0, 523.25);
-      playTone(523.25, 0.18, "triangle", 0.032, 0.1, 659.25);
-      playTone(659.25, 0.2, "sine", 0.03, 0.22, 783.99);
-      playTone(987.77, 0.13, "sine", 0.02, 0.42);
-      playTone(783.99, 0.22, "triangle", 0.026, 0.5, 1046.5);
+      const melody = [
+        [392, 0.18, "sine", 0.028, 0, 493.88],
+        [523.25, 0.2, "triangle", 0.032, 0.11, 659.25],
+        [659.25, 0.22, "sine", 0.03, 0.25, 783.99],
+        [783.99, 0.24, "triangle", 0.028, 0.4, 880],
+        [659.25, 0.18, "sine", 0.022, 0.58],
+        [880, 0.28, "sine", 0.024, 0.68, 1046.5],
+        [523.25, 0.42, "triangle", 0.018, 0.86],
+        [659.25, 0.42, "sine", 0.016, 0.86],
+        [783.99, 0.5, "sine", 0.014, 0.9]
+      ];
+      melody.forEach(([freq, duration, type, gain, delay, endFreq]) => {
+        playTone(freq, duration, type, gain, delay, endFreq || null);
+      });
     }
 
     function renderMusicControls() {
-      const signature = `${state.musicEnabled}|${state.musicSong}`;
+      const signature = `${state.musicEnabled}|${state.musicSong}|${state.volume}`;
       if (renderCache.music === signature) return;
       renderCache.music = signature;
       els.musicSelect.value = MUSIC_SONGS[state.musicSong] ? state.musicSong : "kalimba";
+      els.volumeSlider.value = String(state.volume);
+      els.volumeValue.textContent = `${state.volume}%`;
       const icon = state.musicEnabled ? "music-2" : "music";
       els.musicToggleBtn.innerHTML = `<i data-lucide="${icon}"></i>${state.musicEnabled ? "Music On" : "Music Off"}`;
       els.musicToggleBtn.classList.toggle("active", state.musicEnabled);
@@ -4522,13 +4601,15 @@
     function playMusicNote(freq, song) {
       const ctx = ensureAudioContext();
       if (!ctx) return;
+      const scaledGain = song.gain * volumeScale();
+      if (scaledGain <= 0.0005) return;
       const start = ctx.currentTime;
       const osc = ctx.createOscillator();
       const amp = ctx.createGain();
       osc.type = song.wave;
       osc.frequency.setValueAtTime(freq, start);
       amp.gain.setValueAtTime(0.001, start);
-      amp.gain.exponentialRampToValueAtTime(song.gain, start + 0.02);
+      amp.gain.exponentialRampToValueAtTime(scaledGain, start + 0.02);
       amp.gain.exponentialRampToValueAtTime(0.001, start + 0.34);
       osc.connect(amp).connect(ctx.destination);
       osc.start(start);
@@ -4580,12 +4661,21 @@
       render();
     }
 
+    function changeVolume() {
+      state.volume = Math.max(0, Math.min(100, Number(els.volumeSlider.value) || 0));
+      saveNumberSetting("dtct-xiangqi-volume", state.volume);
+      broadcastMusicState();
+      renderMusicControls();
+      render();
+    }
+
     function broadcastMusicState() {
       sendOnlineMessage({
         type: "music",
         music: {
           enabled: state.musicEnabled,
-          song: state.musicSong
+          song: state.musicSong,
+          volume: state.volume
         }
       });
     }
@@ -4593,6 +4683,10 @@
     function applyRemoteMusic(music) {
       if (!music) return;
       state.musicSong = MUSIC_SONGS[music.song] ? music.song : "kalimba";
+      if (Number.isFinite(Number(music.volume))) {
+        state.volume = Math.max(0, Math.min(100, Number(music.volume)));
+        saveNumberSetting("dtct-xiangqi-volume", state.volume);
+      }
       saveTextSetting("dtct-xiangqi-music-song", state.musicSong);
       if (music.enabled) {
         startFunnyMusic({ broadcast: false });
@@ -4619,7 +4713,7 @@
       utterance.lang = state.coachLanguage;
       utterance.rate = state.coachLanguage.startsWith("vi") ? 0.9 : 0.94;
       utterance.pitch = state.coachVoiceStyle === "female" ? 1.08 : state.coachVoiceStyle === "male" ? 0.86 : 0.92;
-      utterance.volume = 0.95;
+      utterance.volume = Math.max(0, Math.min(1, 0.95 * volumeScale()));
       const voice = getPreferredVoice(state.coachLanguage, state.coachVoiceStyle);
       if (voice) utterance.voice = voice;
       window.speechSynthesis.speak(utterance);
@@ -4901,9 +4995,7 @@
     }
 
     function resetMatch(playerColor = RED, options = {}) {
-      const effectivePlayerColor = state.online.role
-        ? state.online.role === "guest" ? BLACK : RED
-        : playerColor;
+      const effectivePlayerColor = playerColor;
       playSound("toggle");
       state.board = createInitialBoard();
       state.sideToMove = RED;
@@ -4932,6 +5024,7 @@
       state.coachAdvice = null;
       state.analysisView = null;
       render();
+      refreshConnectedColorStatus();
       if (state.online.connected && options.broadcast !== false) {
         sendOnlineMessage({ type: "reset", snapshot: buildOnlineSnapshot() });
         broadcastRewardSync();
@@ -5435,7 +5528,7 @@
         const recipient = rewardRecipient(kind);
         const disabled = recipient ? "" : "disabled";
         const tickTitle = recipient
-          ? `Add this reward for ${playerLabel(recipient)}`
+          ? `Add this reward for ${rewardPersonLabel(recipient)}`
           : "Finish a match first, or use the plus buttons for manual changes.";
         return `
           <div class="reward-row" data-reward-kind="${kind}" data-reward-id="${item.id}">
@@ -5454,10 +5547,10 @@
     function renderRewardPersonControls(color, count) {
       return `
         <div class="reward-person ${color}">
-          <span>${escapeHtml(playerLabel(color))}</span>
+          <span>${escapeHtml(rewardPersonLabel(color))}</span>
           <strong>${count}</strong>
-          <button class="icon-btn" data-reward-action="dec" data-reward-player="${color}" aria-label="Reduce ${playerLabel(color)} reward count"><i data-lucide="minus"></i></button>
-          <button class="icon-btn" data-reward-action="inc" data-reward-player="${color}" aria-label="Increase ${playerLabel(color)} reward count"><i data-lucide="plus"></i></button>
+          <button class="icon-btn" data-reward-action="dec" data-reward-player="${color}" aria-label="Reduce ${rewardPersonLabel(color)} reward count"><i data-lucide="minus"></i></button>
+          <button class="icon-btn" data-reward-action="inc" data-reward-player="${color}" aria-label="Increase ${rewardPersonLabel(color)} reward count"><i data-lucide="plus"></i></button>
         </div>
       `;
     }
@@ -5471,13 +5564,15 @@
       const signature = JSON.stringify({
         rewards: state.rewards,
         claims: state.rewardRoundClaims,
-        winner: state.winnerColor
+        winner: state.winnerColor,
+        playerColor: state.playerColor,
+        onlineRole: state.online.role
       });
       if (renderCache.rewards === signature) return;
       renderCache.rewards = signature;
       els.rewardSummary.textContent = summary;
-      els.winnerRewardTotal.textContent = `Đình Tài ${winnerTotals.red} · Cát Tiên ${winnerTotals.black}`;
-      els.loserRewardTotal.textContent = `Đình Tài ${loserTotals.red} · Cát Tiên ${loserTotals.black}`;
+      els.winnerRewardTotal.textContent = `${rewardPersonLabel(RED)} ${winnerTotals.red} · ${rewardPersonLabel(BLACK)} ${winnerTotals.black}`;
+      els.loserRewardTotal.textContent = `${rewardPersonLabel(RED)} ${loserTotals.red} · ${rewardPersonLabel(BLACK)} ${loserTotals.black}`;
       els.winnerRewardList.innerHTML = renderRewardRows("winner");
       els.loserRewardList.innerHTML = renderRewardRows("loser");
       iconsDirty = true;
@@ -5493,7 +5588,8 @@
 
     function rewardRecipient(kind) {
       if (!state.winnerColor) return null;
-      return kind === "winner" ? state.winnerColor : other(state.winnerColor);
+      const recipientColor = kind === "winner" ? state.winnerColor : other(state.winnerColor);
+      return rewardPersonKeyForColor(recipientColor);
     }
 
     function openRewardSummary(kind) {
@@ -5503,14 +5599,14 @@
       els.rewardSummaryTitle.textContent = title;
       els.rewardSummaryModal.dataset.summaryKind = kind;
       els.rewardSummaryGrid.innerHTML = [RED, BLACK].map((color) => {
-        const avatar = color === RED ? "🐶" : "🐼";
+        const avatar = rewardPersonAvatar(color);
         const rows = activeRewardRows(kind).map((item) => (
           `<li><strong>${item.counts[color]}</strong> × ${escapeHtml(item.text)}</li>`
         )).join("");
         const total = activeRewardRows(kind).reduce((sum, item) => sum + item.counts[color], 0);
         return `
           <section class="summary-person">
-            <h3>${avatar} ${escapeHtml(playerLabel(color))} <span class="badge">${total} total</span></h3>
+            <h3>${avatar} ${escapeHtml(rewardPersonLabel(color))} <span class="badge">${total} total</span></h3>
             <ul>${rows}</ul>
           </section>
         `;
@@ -5671,6 +5767,24 @@
       }
     }
 
+    function readNumberSetting(key, fallback, min = -Infinity, max = Infinity) {
+      try {
+        const raw = Number(localStorage.getItem(key));
+        if (!Number.isFinite(raw)) return fallback;
+        return Math.min(max, Math.max(min, raw));
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveNumberSetting(key, value) {
+      try {
+        localStorage.setItem(key, String(value));
+      } catch {
+        // Preference storage is optional; the game still works without it.
+      }
+    }
+
     function normalizeSecret(value) {
       return String(value || "")
         .trim()
@@ -5723,6 +5837,11 @@
       els.connectionStatus.textContent = text;
       updateModeClasses();
       refreshRewardSaveStatus();
+    }
+
+    function refreshConnectedColorStatus() {
+      if (!state.online.connected) return;
+      setOnlineStatus(`Connected as ${state.playerColor === RED ? "Red" : "Black"}`);
     }
 
     function ensurePeerSupport() {
@@ -5830,7 +5949,7 @@
       state.online.role = role;
       conn.on("open", () => {
         state.online.connected = true;
-        setOnlineStatus(role === "host" ? "Connected as Red" : "Connected as Black");
+        refreshConnectedColorStatus();
         flashStatus(role === "host" ? "Cát Tiên joined the board." : "Joined Đình Tài's board.");
         if (role === "host") {
           sendOnlineMessage({ type: "snapshot", snapshot: buildOnlineSnapshot() });
@@ -5979,6 +6098,7 @@
 
     function buildOnlineSnapshot() {
       return {
+        hostPlayerColor: currentHostColor(),
         board: serializeBoard(state.board),
         sideToMove: state.sideToMove,
         captured: serializeCaptured(state.captured),
@@ -5992,6 +6112,7 @@
 
     function applyOnlineSnapshot(snapshot, notice) {
       if (!snapshot || !snapshot.board) return;
+      const hostPlayerColor = snapshot.hostPlayerColor === BLACK ? BLACK : RED;
       state.board = deserializeBoard(snapshot.board);
       state.sideToMove = snapshot.sideToMove || RED;
       state.captured = deserializeCaptured(snapshot.captured);
@@ -6003,7 +6124,7 @@
       state.finishPopup = { closed: false, minimized: false };
       state.endQuoteIndex = Number.isInteger(snapshot.endQuoteIndex) ? snapshot.endQuoteIndex : null;
       state.endSoundPlayed = Boolean(snapshot.gameOver);
-      state.playerColor = state.online.role === "guest" ? BLACK : RED;
+      state.playerColor = colorForOnlineRole(state.online.role, hostPlayerColor);
       state.aiColor = other(state.playerColor);
       state.flipped = state.playerColor === BLACK;
       state.aiEnabled = false;
@@ -6018,6 +6139,7 @@
       state.coachAdvice = null;
       renderCache.history = null;
       renderCache.captured = null;
+      refreshConnectedColorStatus();
       if (notice) flashStatus(notice);
       render();
       scheduleAutoOurPlan();
@@ -6118,6 +6240,7 @@
     });
     els.musicSelect.addEventListener("change", changeMusicSong);
     els.musicToggleBtn.addEventListener("click", toggleFunnyMusic);
+    els.volumeSlider.addEventListener("input", changeVolume);
     els.coachPasswordInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") unlockCoachTools();
     });
@@ -6153,6 +6276,8 @@
     els.coachVoiceSelect.value = state.coachVoiceStyle;
     els.themeSelect.value = state.theme === "blue-pink" ? "blue-pink" : "classic";
     els.musicSelect.value = MUSIC_SONGS[state.musicSong] ? state.musicSong : "kalimba";
+    els.volumeSlider.value = String(state.volume);
+    els.volumeValue.textContent = `${state.volume}%`;
     function refreshCoachSettings() {
       state.coachAdvice = null;
       state.analysisView = null;
